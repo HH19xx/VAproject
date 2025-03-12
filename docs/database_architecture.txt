@@ -1,0 +1,53 @@
+データベースとテーブルの構成
+
+master (マスターデータ)
+base（基本データ） 
+–admin（管理者） 
+–client（顧客） 
+–target（観察対象） 
+temp（各種一時保存データ） 
+log（各種ログ）
+
+1. master (マスターデータ)
+システム全体で利用する固定的なデータを管理します。
+
+目的: 固定的なデータや参照用データを保存する。
+例:
+行動カテゴリ（観察対象の行動種別）
+システムの各種設定値
+テーブル名	用途	備考
+action_types	行動の種類を定義するテーブル	例:「移動」「飲食」
+settings	システム設定値を管理	キーバリュー形式が便利
+
+2. base (基本データ)
+システムの主要データを管理するためのテーブル群。
+
+テーブル名	用途	備考
+admin	管理者アカウント情報を管理	認証に利用
+client	顧客情報（管理者が担当する顧客）を管理	顧客別のデータ紐付け
+target	観察対象の情報を管理	対象の属性を格納
+
+例: target のフィールド例
+id          INT       PRIMARY KEY       -- 観察対象の一意な識別子
+name        VARCHAR   NOT NULL          -- 観察対象の名前
+description TEXT                         -- 観察対象の説明（任意）
+created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+3. temp (一時保存データ)
+未確定または中間的なデータを一時的に保存するためのテーブル群。
+
+テーブル名	用途	備考
+temp_actions	ユーザーが入力途中の行動データを保存	後で確定処理を実施
+4. log (各種ログデータ)
+操作ログやエラーログなどの追跡可能なデータを記録。
+
+テーブル名	用途	備考
+action_logs	観察対象の行動履歴を記録	傾向分析に利用
+error_logs	システムエラーや例外を記録	トラブルシューティング用
+
+例: action_logs のフィールド例
+id          INT       PRIMARY KEY       -- ログの一意な識別子
+target_id   INT       FOREIGN KEY       -- 観察対象のID
+action_type INT       FOREIGN KEY       -- 行動の種類（マスタ参照）
+timestamp   TIMESTAMP NOT NULL          -- 行動が発生した日時
+notes       TEXT                         -- 任意の補足情報

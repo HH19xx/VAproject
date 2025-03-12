@@ -1,0 +1,87 @@
+version: '3.8' # Docker Composeのバージョン指定
+
+services:
+  # マスターDB（システム全体で利用する固定データを管理）
+  master_db:
+    image: postgres:14  # PostgreSQL 14を使用
+    environment:
+      POSTGRES_USER: master_user
+      POSTGRES_PASSWORD: master_password
+      POSTGRES_DB: master_db
+    ports:
+      - "5433:5432"  # ホストの5433番ポートでアクセス可能
+    volumes:
+      - ./migrations/master:/migrations  # マイグレーション用スクリプトのマウント
+      - master_data:/var/lib/postgresql/data  # データの永続化
+
+  # ベースDB（管理者・顧客・観察対象などの主要データを管理）
+  base_db:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: base_user
+      POSTGRES_PASSWORD: base_password
+      POSTGRES_DB: base_db
+    ports:
+      - "5434:5432"
+    volumes:
+      - ./migrations/base:/migrations
+      - base_data:/var/lib/postgresql/data
+
+  # 一時データを管理するDB（未確定データの一時保存）
+  temp_db:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: temp_user
+      POSTGRES_PASSWORD: temp_password
+      POSTGRES_DB: temp_db
+    ports:
+      - "5435:5432"
+    volumes:
+      - ./migrations/temp:/migrations
+      - temp_data:/var/lib/postgresql/data
+
+  # ログデータを管理するDB（操作ログやエラーログの保存）
+  log_db:
+    image: postgres:14
+    environment:
+      POSTGRES_USER: log_user
+      POSTGRES_PASSWORD: log_password
+      POSTGRES_DB: log_db
+    ports:
+      - "5436:5432"
+    volumes:
+      - ./migrations/log:/migrations
+      - log_data:/var/lib/postgresql/data
+
+  # データベースのマイグレーションを実行するコンテナ
+  migrate:
+    image: migrate/migrate  # データベースのマイグレーションツール
+    depends_on:
+      - master_db
+      - base_db
+      - temp_db
+      - log_db
+    entrypoint: >
+      sh -c "
+      sleep 5 &&  # DBの起動を待つ（DBコンテナが完全に起動する前にマイグレーションを実行すると失敗するため）
+      
+      # master_db に対してマイグレーションを適用
+      migrate -path /migrations/master -database postgres://master_user:master_password@master_db:5432/master_db up &&
+
+      # base_db に対してマイグレーションを適用
+      migrate -path /migrations/base -database postgres://base_user:base_password@base_db:5432/base_db up &&
+
+      # temp_db に対してマイグレーションを適用
+      migrate -path /migrations/temp -database postgres://temp_user:temp_password@temp_db:5432/temp_db up &&
+
+      # log_db に対してマイグレーションを適用
+      migrate -path /migrations/log -database postgres://log_user:log_password@log_db:5432/log_db up
+      "
+    volumes:
+      - ./migrations:/migrations  # マイグレーションファイルの配置
+
+volumes:
+  master_data:  # マスターDBのデータ永続化
+  base_data:  # ベースDBのデータ永続化
+  temp_data:  # 一時DBのデータ永続化
+  log_data:  # ログDBのデータ永続化
