@@ -3,7 +3,7 @@ package service
 import (
 	"log"
 
-	"VAproject/infra/db"
+	"server/infra/db"
 )
 
 func InitRegistrationService() {
@@ -15,4 +15,3 @@ func InitRegistrationService() {
 
 	// ここでクエリ等を実行できる
 }
-
