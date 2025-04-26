@@ -8,7 +8,7 @@ import (
 )
 
 func NewPostgresConnection() (*sql.DB, error) {
-	host := "db"         // docker-composeのservice名
+	host := "localhost"  // docker-composeのservice名（開発段階ではローカルなので「localhost」）
 	port := 5432         // PostgreSQLポート
 	user := "admin"      // POSTGRES_USER
 	password := "secret" // POSTGRES_PASSWORD

@@ -1,3 +1,4 @@
+// infra/db/connection_test.go
 package db
 
 import (
@@ -7,12 +8,12 @@ import (
 func TestPostgresConnection(t *testing.T) {
 	db, err := NewPostgresConnection()
 	if err != nil {
-		t.Fatalf("データベース接続に失敗しました：%v", err)
+		t.Fatalf("データベース接続に失敗しました: %v", err)
 	}
 	defer db.Close()
 
 	err = db.Ping()
 	if err != nil {
-		t.Fatalf("データベース接続に失敗しました：%v", err)
+		t.Fatalf("データベースPingに失敗しました: %v", err)
 	}
 }
