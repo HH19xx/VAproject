@@ -1,5 +1,7 @@
 全体的なディレクトリ構成
-project/
+VAproject/
+│
+server/
 ├── apps/
 │   ├── admin/                # 管理者向けアプリ
 │   ├── customer/             # 顧客向けアプリ
