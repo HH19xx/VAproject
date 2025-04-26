@@ -1,9 +1,9 @@
 package repository
 
 import (
-	"VAproject/server/core/domain"
 	"database/sql"
 	"fmt"
+	"server/core/domain"
 )
 
 // UserRepository はユーザーデータへのアクセスを抽象化するインターフェースです。

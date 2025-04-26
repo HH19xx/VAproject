@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"VAproject/server/apps/registration/handler"
+	"server/apps/registration/handler"
 
 	"github.com/gorilla/mux"
 )

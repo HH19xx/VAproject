@@ -1,4 +1,4 @@
-module VAproject/server
+module server
 
 go 1.23.2
 

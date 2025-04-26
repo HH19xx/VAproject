@@ -1,9 +1,9 @@
 package usecases
 
 import (
-	"VAproject/server/core/domain"
-	"VAproject/server/infra/repository"
 	"errors"
+	"server/core/domain"
+	"server/infra/repository"
 )
 
 // UserUseCase はユーザー関連のユースケースを定義します。

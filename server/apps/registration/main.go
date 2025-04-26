@@ -1,13 +1,13 @@
 package main
 
 import (
-	"VAproject/server/apps/registration/handler"
-	"VAproject/server/apps/registration/routes"
-	"VAproject/server/core/usecases"
-	"VAproject/server/infra/db"
-	"VAproject/server/infra/repository"
 	"log"
 	"net/http"
+	"server/apps/registration/handler"
+	"server/apps/registration/routes"
+	"server/core/usecases"
+	"server/infra/db"
+	"server/infra/repository"
 
 	"github.com/gorilla/mux"
 	"github.com/rs/cors" // CORSミドルウェアをインポート
