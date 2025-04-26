@@ -1,10 +1,10 @@
 package handler
 
 import (
-	"VAproject/server/core/domain"
-	"VAproject/server/core/usecases"
 	"encoding/json"
 	"net/http"
+	"server/core/domain"
+	"server/core/usecases"
 )
 
 // RegistrationHandler は登録関連のHTTPハンドラです。

@@ -9,9 +9,8 @@ import (
 
 // NewDBConnection は新しいデータベース接続を確立します。
 func NewDBConnection() (*sql.DB, error) {
-	// データベース接続情報は環境変数などから取得するのが望ましいです。
+	// 後ほど環境変数に変更。
 	// Docker Composeの設定に合わせて接続情報を記述します。
-	// 実際のアプリケーションでは、安全な方法で接続情報を管理してください。
 	// ホストOSからDockerコンテナに接続するため、hostをlocalhostに設定します。
 	connStr := "user=admin password=secret dbname=master host=localhost sslmode=disable"
 	db, err := sql.Open("postgres", connStr)
