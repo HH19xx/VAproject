@@ -1,0 +1,57 @@
+VAproject
+├── client
+│   ├── README.md
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── public
+│   │   └── vite.svg
+│   ├── src
+│   │   ├── App.css
+│   │   ├── App.tsx
+│   │   ├── assets
+│   │   │   └── react.svg
+│   │   ├── hooks
+│   │   │   └── useFetchMassages.ts
+│   │   ├── index.css
+│   │   ├── main.tsx
+│   │   └── vite-env.d.ts
+│   ├── tsconfig.app.json
+│   ├── tsconfig.json
+│   ├── tsconfig.node.json
+│   └── vite.config.ts
+├── docker-compose.yml
+├── docs
+│   ├── database_architecture.txt
+│   ├── schedule.md
+│   └── software_architecture.txt
+├── infra
+│   └── db
+│       └── init
+└── server
+    ├── apps
+    │   ├── admin
+    │   │   └── admin_main.go
+    │   ├── customer
+    │   │   └── customer_main.go
+    │   └── registration
+    │       ├── handler
+    │       │   └── registration_handler.go
+    │       ├── main.go
+    │       ├── proto
+    │       │   └── message.proto
+    │       └── service
+    │           └── registration_service.go
+    ├── config
+    ├── go.mod
+    ├── go.sum
+    ├── infra
+    │   └── db
+    │       ├── connection.go
+    │       ├── connection_test.go
+    │       ├── init
+    │       ├── migrate.go
+    │       └── migrations
+    │           └── 0001_create_action_types.sql
+    └── interface
