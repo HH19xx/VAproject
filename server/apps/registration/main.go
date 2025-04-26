@@ -3,7 +3,7 @@ package main
 import (
 	"net/http"
 
-	"VAproject/server/apps/registration/handler"
+	"server/apps/registration/handler"
 )
 
 // CORS対応ミドルウェア

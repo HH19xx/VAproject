@@ -8,11 +8,11 @@ import (
 )
 
 func NewPostgresConnection() (*sql.DB, error) {
-	host := "db"             // docker-composeのservice名
-	port := 5432             // PostgreSQLポート
-	user := "admin"          // POSTGRES_USER
-	password := "secret"     // POSTGRES_PASSWORD
-	dbname := "master"       // POSTGRES_DB
+	host := "db"         // docker-composeのservice名
+	port := 5432         // PostgreSQLポート
+	user := "admin"      // POSTGRES_USER
+	password := "secret" // POSTGRES_PASSWORD
+	dbname := "master"   // POSTGRES_DB
 
 	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		host, port, user, password, dbname)
@@ -23,4 +23,3 @@ func NewPostgresConnection() (*sql.DB, error) {
 	}
 	return db, nil
 }
-
