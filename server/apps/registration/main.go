@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"server/apps/registration/handler"
-	"server/infra/db" // ← これを追加しますわ
+	"server/infra/db"
 )
 
 // CORS対応ミドルウェア
@@ -25,23 +25,25 @@ func corsMiddleware(next http.Handler) http.Handler {
 }
 
 func main() {
-	// ⭐ DB接続
+	// DB接続
 	conn, err := db.NewPostgresConnection()
 	if err != nil {
 		log.Fatalf("データベース接続失敗: %v", err)
 	}
 	defer conn.Close()
 
-	// ⭐ マイグレーション実行（RunMigrationsを作っている前提です）
+	// マイグレーション実行（RunMigrationsを作っている前提）
 	if err := db.RunMigrations(conn); err != nil {
 		log.Fatalf("マイグレーション失敗: %v", err)
 	}
 
-	// ⭐ HTTPサーバ起動
+	// HTTPサーバ起動
 	mux := http.NewServeMux()
 	mux.HandleFunc("/message", handler.Handler)
 
 	wrappedMux := corsMiddleware(mux)
+
+	log.Println("サーバーがポート8080で起動しました")
 
 	if err := http.ListenAndServe(":8080", wrappedMux); err != nil {
 		panic(err)
