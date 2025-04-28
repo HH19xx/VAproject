@@ -1,4 +1,3 @@
-// infra/db/connection_test.go
 package db
 
 import (
