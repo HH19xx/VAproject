@@ -8,7 +8,7 @@ import (
 	"server/infra/db"
 )
 
-// CORS対応ミドルウェア
+// CORSを無効化する
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -24,20 +24,21 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+// main関数で全体を制御する
 func main() {
-	// DB接続
+	// DBに接続する
 	conn, err := db.NewPostgresConnection()
 	if err != nil {
 		log.Fatalf("データベース接続失敗: %v", err)
 	}
 	defer conn.Close()
 
-	// マイグレーション実行（RunMigrationsを作っている前提）
+	// マイグレーションを実行する
 	if err := db.RunMigrations(conn); err != nil {
 		log.Fatalf("マイグレーション失敗: %v", err)
 	}
 
-	// HTTPサーバ起動
+	// HTTPサーバを起動する
 	mux := http.NewServeMux()
 	mux.HandleFunc("/message", handler.Handler)
 
