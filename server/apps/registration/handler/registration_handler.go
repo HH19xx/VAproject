@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-// MessageはレスポンスのJSONの構造体
+// レスポンスをJSONの構造体、Messageとして定義する
 type Message struct {
 	Message string `json:"message"`
 }
@@ -14,13 +14,13 @@ type Message struct {
 func Handler(w http.ResponseWriter, r *http.Request) {
 	response := Message{Message: "こんにちは、みなさん"}
 
-	// レスポンスのJSONを返す
+	// レスポンスのContent-TypeヘッダをJSONとして設定
 	w.Header().Set("Content-Type", "application/json")
 
 	// レスポンスのステータスコードを設定
 	w.WriteHeader(http.StatusOK)
 
-	// エラーが発生した場合はエラーメッセージを返す
+	// JSONのエンコード処理に失敗した場合、エラーメッセージを返す
 	if err := json.NewEncoder(w).Encode(response); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
