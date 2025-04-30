@@ -2,9 +2,8 @@
 
 master (マスターデータ)
 base（基本データ） 
-–admin（管理者） 
-–client（顧客） 
-–target（観察対象） 
+– user（顧客） 
+– target（観察対象） 
 temp（各種一時保存データ） 
 log（各種ログ）
 
@@ -23,8 +22,7 @@ settings	システム設定値を管理	キーバリュー形式が便利
 システムの主要データを管理するためのテーブル群。
 
 テーブル名	用途	備考
-admin	管理者アカウント情報を管理	認証に利用
-client	顧客情報（管理者が担当する顧客）を管理	顧客別のデータ紐付け
+user	ユーザー情報を管理
 target	観察対象の情報を管理	対象の属性を格納
 
 例: target のフィールド例
@@ -33,7 +31,7 @@ name        VARCHAR   NOT NULL          -- 観察対象の名前
 description TEXT                         -- 観察対象の説明（任意）
 created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
-3. temp (一時保存データ)
+1. temp (一時保存データ)
 未確定または中間的なデータを一時的に保存するためのテーブル群。
 
 テーブル名	用途	備考
