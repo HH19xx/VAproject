@@ -1,6 +1,8 @@
-バックエンドのディレクトリ構成
+# バックエンドのディレクトリ構成
 
-server/
+VAProject
+│
+server/                       # バックエンドのルートディレクトリ
 ├── apps/
 │   ├── admin/                # 管理者向けアプリ
 │   ├── customer/             # 顧客向けアプリ
@@ -19,7 +21,8 @@ server/
 │   └── middleware/           # 共通ミドルウェア
 └── config/                   # 設定ファイル (環境変数, 設定値)
 
-アプリごとの詳細構成
+## アプリごとの詳細構成
+
 1. 管理者向けアプリ (apps/admin)
 apps/admin/
 ├── main.go                   # エントリーポイント
@@ -59,7 +62,8 @@ apps/registration/
     └── registration_repository.go
 特徴: 新規ユーザーの登録機能や他2つのアプリとの統合ロジックを実装。
 
-共通部分 (core/, infra/, interface/)
+## 共通部分 (core/, infra/, interface/)
+
 1. core/ (ドメインロジック)
 core/
 ├── domain/
@@ -102,7 +106,8 @@ interface/
     └── logging_middleware.go # ロギングミドルウェア
 
 
-ポイント
+## ポイント
+
 1. クリーンアーキテクチャを採用し、独立性と共通性のバランスをとる。
 各アプリは独自のルーティングやエンドポイントを持ちつつ、共通のドメインロジックやユースケースを core/ に集約して再利用する。
 

@@ -1,5 +1,7 @@
+# 進捗
+
 VAproject
-├── client
+├── client(フロントエンドのルートディレクトリ)
 │   ├── README.md
 │   ├── eslint.config.js
 │   ├── index.html
@@ -29,7 +31,7 @@ VAproject
 ├── infra
 │   └── db
 │       └── init
-└── server
+└── server(バックエンドのルートディレクトリ)
     ├── apps
     │   ├── admin
     │   │   └── admin_main.go

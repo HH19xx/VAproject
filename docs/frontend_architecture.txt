@@ -1,6 +1,8 @@
-フロントエンドのディレクトリ構成
+# フロントエンドのディレクトリ構成
 
-client/
+VAProject
+│
+client/                              # フロントエンドのルートディレクトリ
 ├── README.md
 ├── eslint.config.js
 ├── index.html
