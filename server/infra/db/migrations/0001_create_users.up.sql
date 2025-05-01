@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     name VARCHAR NOT NULL,
 --   email VARCHAR UNIQUE NOT NULL,
---   仮のパスワード
+--   仮の平文のパスワード
     password VARCHAR(20) NOT NULL,
 --   本番用のパスワード
 --   password_hash TEXT NOT NULL,
