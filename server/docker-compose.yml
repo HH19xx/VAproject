@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   db:
     image: postgres:15
@@ -17,10 +19,9 @@ services:
 
   app:
     build:
-      # context: ./server
       context: .
       dockerfile: Dockerfile
-    container_name: go_app
+    container_name: server
     depends_on:
       - db
     ports:
@@ -28,15 +29,16 @@ services:
     networks:
       - backend
     environment:
-      - DB_HOST=db # データベースホスト名をサービス名で指定
-      - DB_PORT=${DB_PORT:-5432} # ポート番号も環境変数から取得するように修正 (connection.goに合わせて)
-      - DB_USER=${POSTGRES_USER} # .envから取得
-      - DB_PASSWORD=${POSTGRES_PASSWORD} # .envから取得
-      - DB_NAME=${POSTGRES_DB} # .envから取得
-    working_dir: /app_data  # アプリケーションの実行ディレクトリ
-    # volumes: # ボリュームマウントを削除し、Dockerfileのコピー内容のみを使用
-    #   - ./server:/app       # ホットリロード開発を有効にする (ソースコード用)
-    command: ./app          # 相対パスでアプリケーションを起動
+      - DB_HOST=db
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+      - DB_NAME=${POSTGRES_DB}
+    working_dir: /app
+    command: ./app         # 作成されたバイナリを起動
+    # ↓ 開発中のみホストのソースをマウントしてホットリロード可能
+    # volumes:
+    #   - .:/app
 
 volumes:
   pgdata:

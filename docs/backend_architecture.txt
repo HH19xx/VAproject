@@ -4,9 +4,7 @@ VAProject
 │
 server/                       # バックエンドのルートディレクトリ
 ├── apps/
-│   ├── admin/                # 管理者向けアプリ
-│   ├── customer/             # 顧客向けアプリ
-│   └── registration/         # アカウント登録兼統合アプリ
+│   └── main/                 # メインアプリ
 ├── core/                     # 共通ロジック (ユースケースやエンティティ)
 │   ├── domain/               # エンティティとドメインモデル
 │   ├── usecases/             # ユースケース (アプリケーション層)
@@ -22,8 +20,21 @@ server/                       # バックエンドのルートディレクトリ
 └── config/                   # 設定ファイル (環境変数, 設定値)
 
 ## アプリごとの詳細構成
+1. アカウント登録・統合アプリ (apps/main)
+apps/main/
+├── main.go                   # エントリーポイント
+├── handler/                  # プレゼンテーション層 (登録と統合API)
+│   └── main_handler.go
+├── routes/                   # ルーティング設定
+│   └── main_routes.go
+├── service/                  # アプリケーション固有のビジネスロジック
+│   └── main_service.go
+└── repository/               # データアクセス (インフラ層)
+    └── registration_repository.go
+特徴: 新規ユーザーの登録機能や他2つのアプリとの統合ロジックを実装。
 
-1. 管理者向けアプリ (apps/admin)
+### 後で追加、今は作らない。
+2. 管理者向けアプリ (apps/admin)
 apps/admin/
 ├── main.go                   # エントリーポイント
 ├── handler/                  # プレゼンテーション層 (管理者APIエンドポイント)
@@ -36,7 +47,7 @@ apps/admin/
     └── admin_repository.go
 特徴: 管理者向けに特化したエンドポイントや機能（統計データ管理、ユーザー管理など）を実装。
 
-2. 顧客向けアプリ (apps/customer)
+3. 顧客向けアプリ (apps/customer)
 apps/customer/
 ├── main.go                   # エントリーポイント
 ├── handler/                  # プレゼンテーション層 (顧客APIエンドポイント)
@@ -48,19 +59,6 @@ apps/customer/
 └── repository/               # データアクセス (インフラ層)
     └── customer_repository.go
 特徴: 顧客が利用する機能（データの閲覧やダッシュボード表示など）を中心に構築。
-
-3. アカウント登録・統合アプリ (apps/registration)
-apps/registration/
-├── main.go                   # エントリーポイント
-├── handler/                  # プレゼンテーション層 (登録と統合API)
-│   └── registration_handler.go
-├── routes/                   # ルーティング設定
-│   └── registration_routes.go
-├── service/                  # アプリケーション固有のビジネスロジック
-│   └── registration_service.go
-└── repository/               # データアクセス (インフラ層)
-    └── registration_repository.go
-特徴: 新規ユーザーの登録機能や他2つのアプリとの統合ロジックを実装。
 
 ## 共通部分 (core/, infra/, interface/)
 

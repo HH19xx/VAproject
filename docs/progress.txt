@@ -23,29 +23,31 @@ VAproject
 │   ├── tsconfig.json
 │   ├── tsconfig.node.json
 │   └── vite.config.ts
-├── docker-compose.yml
 ├── docs
+│   ├── backend_architecture.txt
 │   ├── database_architecture.txt
-│   ├── schedule.md
-│   └── software_architecture.txt
-├── infra
-│   └── db
-│       └── init
+│   ├── frontend_architecture.txt
+│   ├── progress.txt
+│   └── schedule.txt
 └── server(バックエンドのルートディレクトリ)
+    ├── Dockerfile
     ├── apps
-    │   ├── admin
-    │   │   └── admin_main.go
-    │   ├── customer
-    │   │   └── customer_main.go
-    │   └── registration
+    │   └── main
     │       ├── handler
-    │       │   └── registration_handler.go
+    │       │   ├── auth_handler.go
+    │       │   └── main_handler.go
     │       ├── main.go
     │       ├── proto
     │       │   └── message.proto
     │       └── service
-    │           └── registration_service.go
+    │           ├── auth_service.go
+    │           └── main_service.go
     ├── config
+    ├── core
+    │   └── shared
+    │       └── utils
+    │           └── jwt_utils.go
+    ├── docker-compose.yml
     ├── go.mod
     ├── go.sum
     ├── infra
@@ -55,5 +57,11 @@ VAproject
     │       ├── init
     │       ├── migrate.go
     │       └── migrations
-    │           └── 0001_create_action_types.sql
+    │           ├── 0001_create_action_types.sql
+    │           ├── 0001_create_custom_actions.up.sql
+    │           ├── 0001_create_targets.up.sql
+    │           ├── 0001_create_users.down.sql
+    │           └── 0001_create_users.up.sql
     └── interface
+        └── middleware
+            └── auth_middleware.go

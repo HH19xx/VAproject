@@ -1,34 +1,30 @@
-# server/Dockerfile
-
-# ビルドステージ
+#  ビルドステージ
 FROM golang:1.22 as builder
 
-# 作業ディレクトリを /app に設定
+# プロジェクトルートを作業ディレクトリに設定
 WORKDIR /app
 
-# ホストの server/ ディレクトリ内容をコンテナの /app にコピー
-COPY . .
-
-# 必要なモジュールをダウンロード
+# go.modとgo.sumを先にコピーして依存取得（キャッシュを活用）
+COPY go.mod go.sum ./
 RUN go mod download
 
-# アプリケーションをビルド
-RUN CGO_ENABLED=0 GOOS=linux go build -o /app/app ./apps/registration/main.go
+# 全体をコンテナにコピー（ルート構造維持）
+COPY . .
 
-# 実行ステージ
+# main.go をビルドしてバイナリを作成
+RUN CGO_ENABLED=0 GOOS=linux go build -o app ./apps/main/main.go
+
+#  実行ステージ
 FROM alpine:latest
 
-# タイムゾーンを設定 (必要に応じて)
+# 最小限の実行環境（必要であれば tzdata 等を追加）
 RUN apk --no-cache add tzdata
 
-# 作業ディレクトリを /app_data に設定
-WORKDIR /app_data
+# 作業ディレクトリを統一して /app に設定
+WORKDIR /app
 
-# ビルドステージから実行ファイルをコピー
-COPY --from=builder /app/app /app_data/app
+# ビルド成果物（app バイナリとすべての構造）をコピー
+COPY --from=builder /app /app
 
-# マイグレーションファイルをコピー (ワーキングディレクトリ基準のパスに合わせる)
-COPY --from=builder /app/infra/db/migrations /app_data/infra/db/migrations
-
-# アプリケーションを起動
+# アプリケーションを実行
 CMD ["./app"]
