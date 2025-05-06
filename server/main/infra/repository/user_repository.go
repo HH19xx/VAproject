@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"server/core/domain"
+	"server/main/domain"
 )
 
 // userRepository は UserRepository インターフェースの具体実装です。
@@ -23,7 +23,8 @@ func (r *userRepository) FindByName(ctx context.Context, name string) (*domain.U
 		Scan(&user.ID, &user.Name, &user.Password)
 
 	if err != nil {
-		return nil, err // 上層で ErrAuthFailed に変換されます
+		// 上層で ErrAuthFailed に変換されます
+		return nil, err
 	}
 	return &user, nil
 }

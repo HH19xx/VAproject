@@ -3,8 +3,8 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
-	"server/core/shared/utils"
-	"server/core/usecases"
+	"server/main/app/usecases"
+	utils "server/main/infra/jwt"
 )
 
 // UserHandler はユーザー関連エンドポイントに必要な依存をまとめた構造体です。

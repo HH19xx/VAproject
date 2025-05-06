@@ -3,14 +3,14 @@ package usecases
 import (
 	"context"
 	"errors"
-	"server/core/domain"
+	"server/main/domain"
 )
 
 // 認証失敗時のエラー
 var ErrAuthFailed = errors.New("認証失敗")
 
 // UserRepository はユーザーに関する永続化の抽象インターフェースです。
-// infra/repository でこのinterfaceを実装します。
+// main/infra/repository でこのinterfaceを実装します。
 type UserRepository interface {
 	FindByName(ctx context.Context, name string) (*domain.User, error)
 }

@@ -4,11 +4,11 @@ import (
 	"log"
 	"net/http"
 
-	"server/core/usecases"
-	"server/infra/db"
-	"server/infra/repository"
-	"server/interface/handler"
-	"server/interface/middleware"
+	"server/main/app/usecases"
+	"server/main/infra/db"
+	"server/main/infra/repository"
+	"server/main/interface/handler"
+	"server/main/interface/middleware"
 )
 
 // CORSミドルウェア（暫定）
@@ -66,7 +66,7 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/login", userHandler.LoginHandler())
 	mux.HandleFunc("/me", userHandler.MeHandler())
-	mux.HandleFunc("/message", handler.Handler) // 認証不要の仮エンドポイント
+	mux.HandleFunc("/message", handler.Handler)
 
 	// JWT認証とCORSミドルウェアを順に適用
 	handlerWithAuth := jwtProtectedMux(mux)

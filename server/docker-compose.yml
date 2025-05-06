@@ -13,7 +13,7 @@ services:
       - "${DB_PORT}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./infra/db/init:/docker-entrypoint-initdb.d
+      - ./main/infra/db/init:/docker-entrypoint-initdb.d
     networks:
       - backend
 
@@ -21,7 +21,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: server
+    container_name: server1
     depends_on:
       - db
     ports:
@@ -34,11 +34,11 @@ services:
       - DB_USER=${POSTGRES_USER}
       - DB_PASSWORD=${POSTGRES_PASSWORD}
       - DB_NAME=${POSTGRES_DB}
-    working_dir: /app
-    command: ./app         # 作成されたバイナリを起動
+    working_dir: /server
+    command: ./server         # 作成されたバイナリを起動
     # ↓ 開発中のみホストのソースをマウントしてホットリロード可能
     # volumes:
-    #   - .:/app
+    #   - .:/server
 
 volumes:
   pgdata:

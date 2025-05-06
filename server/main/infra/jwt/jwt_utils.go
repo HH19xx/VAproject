@@ -18,7 +18,7 @@ type Claims struct {
 
 // JWTトークンを生成する
 func GenerateJWT(userID int) (string, error) {
-	expirationTime := time.Now().Add(24 * time.Hour)
+	expirationTime := time.Now().Add(1 * time.Hour)
 	claims := &Claims{
 		UserID: userID,
 		RegisteredClaims: jwt.RegisteredClaims{

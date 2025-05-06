@@ -19,7 +19,7 @@ func RunMigrations(db *sql.DB) error {
 	}
 
 	// migrationsディレクトリの基底パスを指定
-	basePath := "infra/db/migrations"
+	basePath := "main/infra/db/migrations"
 
 	// マイグレーションファイルを順に適用
 	for _, file := range migrationFiles {
