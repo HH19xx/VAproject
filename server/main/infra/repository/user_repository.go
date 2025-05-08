@@ -31,8 +31,8 @@ func (r *userRepository) FindByName(ctx context.Context, name string) (*domain.U
 // FindByEmail はOAuthで使うemail（nameフィールドに格納）からユーザーを検索します。
 func (r *userRepository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
 	var user domain.User
-	err := r.db.QueryRowContext(ctx, "SELECT id, name FROM users WHERE name = $1", email).
-		Scan(&user.ID, &user.Name)
+	err := r.db.QueryRowContext(ctx, "SELECT id, name, email FROM users WHERE email = $1", email).
+		Scan(&user.ID, &user.Name, &user.Email)
 
 	if err != nil {
 		return nil, err
@@ -42,7 +42,7 @@ func (r *userRepository) FindByEmail(ctx context.Context, email string) (*domain
 
 // Create は指定されたユーザー（主にOAuthユーザー）を登録します。
 func (r *userRepository) Create(ctx context.Context, user *domain.User) (int, error) {
-	err := r.db.QueryRowContext(ctx, "INSERT INTO users (name) VALUES ($1) RETURNING id", user.Name).
+	err := r.db.QueryRowContext(ctx, "INSERT INTO users (email) VALUES ($1) RETURNING id", user.Email).
 		Scan(&user.ID)
 	return user.ID, err
 }
