@@ -16,14 +16,33 @@ const LoginForm = () => {
     }
   };
 
+  const handleGoogleLogin = () => {
+    window.location.href = "http://localhost:8080/auth/google/login";
+  };
+
   return (
-    <form onSubmit={handleSubmit}>
-      <h2>ログイン</h2>
-      <input value={name} onChange={(e) => setName(e.target.value)} placeholder="名前" />
-      <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="パスワード" />
-      <button type="submit">ログイン</button>
-      {error && <p style={{ color: "red" }}>{error}</p>}
-    </form>
+    <div>
+      <form onSubmit={handleSubmit}>
+        <h2>ログイン</h2>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="名前"
+        />
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="パスワード"
+        />
+        <button type="submit">ログイン</button>
+        {error && <p style={{ color: "red" }}>{error}</p>}
+      </form>
+
+      <hr />
+
+      <button onClick={handleGoogleLogin}>Googleでログイン</button>
+    </div>
   );
 };
 
