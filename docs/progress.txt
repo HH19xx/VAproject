@@ -14,8 +14,13 @@ VAproject
 │   │   ├── App.tsx
 │   │   ├── assets
 │   │   │   └── react.svg
+│   │   ├── components
+│   │   │   └── LoginForm.tsx
+│   │   ├── contexts
+│   │   │   └── AuthContext.tsx
 │   │   ├── hooks
-│   │   │   └── useFetchMassages.ts
+│   │   │   ├── useAuth.ts
+│   │   │   └── useFetchMessages.ts
 │   │   ├── index.css
 │   │   ├── main.tsx
 │   │   └── vite-env.d.ts
@@ -31,37 +36,39 @@ VAproject
 │   └── schedule.txt
 └── server(バックエンドのルートディレクトリ)
     ├── Dockerfile
-    ├── apps
-    │   └── main
-    │       ├── handler
-    │       │   ├── auth_handler.go
-    │       │   └── main_handler.go
-    │       ├── main.go
-    │       ├── proto
-    │       │   └── message.proto
-    │       └── service
-    │           ├── auth_service.go
-    │           └── main_service.go
-    ├── config
-    ├── core
-    │   └── shared
-    │       └── utils
-    │           └── jwt_utils.go
     ├── docker-compose.yml
     ├── go.mod
     ├── go.sum
     ├── infra
     │   └── db
-    │       ├── connection.go
-    │       ├── connection_test.go
-    │       ├── init
-    │       ├── migrate.go
-    │       └── migrations
-    │           ├── 0001_create_action_types.sql
-    │           ├── 0001_create_custom_actions.up.sql
-    │           ├── 0001_create_targets.up.sql
-    │           ├── 0001_create_users.down.sql
-    │           └── 0001_create_users.up.sql
-    └── interface
-        └── middleware
-            └── auth_middleware.go
+    │       └── init
+    └── main
+        ├── app
+        │   └── usecases
+        │       └── user_usecase.go
+        ├── cmd
+        │   └── main.go
+        ├── domain
+        │   └── user.go
+        ├── infra
+        │   ├── db
+        │   │   ├── connection.go
+        │   │   ├── connection_test.go
+        │   │   ├── init
+        │   │   ├── migrate.go
+        │   │   └── migrations
+        │   │       ├── 0001_create_action_types.sql
+        │   │       ├── 0001_create_custom_actions.up.sql
+        │   │       ├── 0001_create_targets.up.sql
+        │   │       ├── 0001_create_users.down.sql
+        │   │       └── 0001_create_users.up.sql
+        │   ├── jwt
+        │   │   └── jwt_utils.go
+        │   └── repository
+        │       └── user_repository.go
+        └── interface
+            ├── handler
+            │   ├── auth_handler.go
+            │   └── main_handler.go
+            └── middleware
+                └── auth_middleware.go

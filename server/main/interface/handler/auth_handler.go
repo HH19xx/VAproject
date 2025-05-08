@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"server/main/app/usecases"
-	utils "server/main/infra/jwt"
+	"server/main/infra/jwt"
 )
 
 // UserHandler はユーザー関連エンドポイントに必要な依存をまとめた構造体です。
@@ -30,7 +30,7 @@ func (h *UserHandler) LoginHandler() http.HandlerFunc {
 			return
 		}
 
-		token, err := utils.GenerateJWT(userID)
+		token, err := jwt.GenerateJWT(userID)
 		if err != nil {
 			http.Error(w, "トークン生成失敗", http.StatusInternalServerError)
 			return

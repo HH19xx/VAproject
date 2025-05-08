@@ -11,7 +11,6 @@ import (
 // JWTMiddleware はJWTトークンを検証するミドルウェアです。
 // リクエストヘッダにAuthorizationが含まれていることを確認し、
 // トークンを検証して、ユーザーIDをコンテキストに追加します。
-// 認証に失敗した場合は401 Unauthorizedを返します。
 func JWTMiddleware(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
