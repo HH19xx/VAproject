@@ -1,5 +1,5 @@
 #  ビルドステージ
-FROM golang:1.22 as builder
+FROM golang:1.23 as builder
 
 # プロジェクトルートを作業ディレクトリに設定
 WORKDIR /server

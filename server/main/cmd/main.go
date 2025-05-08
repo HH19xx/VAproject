@@ -68,6 +68,11 @@ func main() {
 	mux.HandleFunc("/me", userHandler.MeHandler())
 	mux.HandleFunc("/message", handler.Handler)
 
+	// Google OAuthのハンドラを設定
+	oauthHandler := &handler.OAuthHandler{Usecase: userUsecase}
+	mux.HandleFunc("/auth/google/login", oauthHandler.GoogleLoginHandler())
+	mux.HandleFunc("/auth/google/callback", oauthHandler.GoogleCallbackHandler())
+
 	// JWT認証とCORSミドルウェアを順に適用
 	handlerWithAuth := jwtProtectedMux(mux)
 	handlerWithCORS := corsMiddleware(handlerWithAuth)
