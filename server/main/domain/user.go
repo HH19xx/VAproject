@@ -7,8 +7,3 @@ type User struct {
 	Email    string
 	Password string
 }
-
-// type UserRepository interface {
-// 	FindByEmail(ctx context.Context, email string) (*User, error)
-// 	Create(ctx context.Context, user *User) (int, error)
-// }

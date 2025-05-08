@@ -1,4 +1,3 @@
-// server/main/app/usecases/user_usecase.go
 package usecases
 
 import (
@@ -11,7 +10,6 @@ import (
 var ErrAuthFailed = errors.New("認証失敗")
 
 // UserRepository はユーザーに関する永続化の抽象インターフェースです。
-// main/infra/repository でこのinterfaceを実装します。
 type UserRepository interface {
 	FindByName(ctx context.Context, name string) (*domain.User, error)
 

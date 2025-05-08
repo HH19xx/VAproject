@@ -31,7 +31,11 @@ func corsMiddleware(next http.Handler) http.Handler {
 func jwtProtectedMux(mux *http.ServeMux) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// 除外パスの設定
-		publicPaths := []string{"/login"}
+		publicPaths := []string{
+			"/login",
+			"/auth/google/login",
+			"/auth/google/callback",
+		}
 		for _, path := range publicPaths {
 			if r.URL.Path == path {
 				mux.ServeHTTP(w, r)
@@ -75,6 +79,7 @@ func main() {
 
 	// JWT認証とCORSミドルウェアを順に適用
 	handlerWithAuth := jwtProtectedMux(mux)
+	// CORSミドルウェアを適用
 	handlerWithCORS := corsMiddleware(handlerWithAuth)
 
 	log.Println("サーバーがポート8080で起動しました")

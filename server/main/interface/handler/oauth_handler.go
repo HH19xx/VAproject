@@ -1,4 +1,3 @@
-// server/main/interface/handler/oauth_handler.go
 package handler
 
 import (
