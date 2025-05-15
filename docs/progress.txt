@@ -39,9 +39,8 @@ VAproject
     ├── docker-compose.yml
     ├── go.mod
     ├── go.sum
-    ├── infra
-    │   └── db
-    │       └── init
+    ├── db
+    │   └── init
     └── main
         ├── app
         │   └── usecases
