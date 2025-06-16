@@ -35,10 +35,7 @@ services:
       - DB_PASSWORD=${POSTGRES_PASSWORD}
       - DB_NAME=${POSTGRES_DB}
     working_dir: /server
-    command: ./server         # 作成されたバイナリを起動
-    # ↓ 開発中のみホストのソースをマウントしてホットリロード可能
-    # volumes:
-    #   - .:/server
+    command: ./server
 
 volumes:
   pgdata:

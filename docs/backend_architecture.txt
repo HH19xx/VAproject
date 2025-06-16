@@ -24,18 +24,18 @@ main/
 │   └── main.go
 ├── app/
 │   ├── usecase/
-│   │   └── registration_usecase.go
+│   │   └── user_usecase.go
 │   └── dto/
-│       └── registration_dto.go
+│       └── user_dto.go
 ├── domain/
-│   └── registration.go
+│   └── user.go
 ├── infra/
 │   ├── db/
 │   └── repository/
-│       └── registration_repository.go
+│       └── user_repository.go
 └── interface/
     ├── handler/
-    │   └── registration_handler.go
+    │   └── user_handler.go
     └── middleware/
         └── auth_middleware.go
 特徴: 新規ユーザーの登録機能や他2つのアプリとの統合ロジックを実装。
