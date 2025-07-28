@@ -1,35 +1,32 @@
 -- golang-migrateでは<version>_<name>.<direction>.sqlで命名する。
--- ユーザーテーブルの作成
+
 CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
-    name VARCHAR NOT NULL,
---   email VARCHAR UNIQUE NOT NULL,
---   仮の平文のパスワード
-    password VARCHAR(20) NOT NULL,
---   本番用のパスワード
---   password_hash TEXT NOT NULL,
-    notes TEXT,
-    updated_at TIMESTAMP NOT NULL,
-    update_user INT REFERENCES users(id),
+    username VARCHAR(32) NOT NULL UNIQUE,
+    email VARCHAR(128) NOT NULL UNIQUE,
+    password_hash VARCHAR(128) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    create_user INT REFERENCES users(id)
+    create_user VARCHAR(32) NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    update_user VARCHAR(32) NOT NULL
 );
 
--- 開発用の初期ユーザー admin を追加（パスワードは仮に admin123）
+
+-- 初期管理者ユーザー（パスワードはハッシュ化して登録することを推奨）
 INSERT INTO users (
-    name,
-    password,
-    notes,
-    updated_at,
-    update_user,
+    username,
+    email,
+    password_hash,
     created_at,
-    create_user
+    create_user,
+    updated_at,
+    update_user
 ) VALUES (
     'admin',
-    'admin123',
-    '開発用の初期管理者ユーザー（平文パスワード）',
+    'admin@example.com',
+    '$2a$10$dummyhashforadmin',
     CURRENT_TIMESTAMP,
-    NULL,
+    'system',
     CURRENT_TIMESTAMP,
-    NULL
+    'system'
 );
