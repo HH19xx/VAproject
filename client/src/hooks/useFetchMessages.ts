@@ -1,38 +1,33 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../contexts/AuthContext"; // AuthContextからuseAuthをインポート
 
-const useFetchMessages = () => {
-    const [message, setMessage] = useState<string | null>(null);
-    const { token } = useAuth(); // useAuthフックを使用してトークンを取得
+export const useFetchMessages = () => {
+    const [message, setMessage] = useState<string>('');
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
-        // トークンがない場合はAPIリクエストを行わない
-        if (!token) {
-            return;
-        }
-
-        fetch("http://localhost:8080/message", {
-            method: "GET",
-            mode: "cors",
-            headers: {
-                "Content-Type": "application/json",
-                // Authorizationヘッダーにトークンを追加
-                "Authorization": `Bearer ${token}`,
-            },
-        })
-            .then((res) => {
-                if (!res.ok) {
-                    throw new Error(`HTTP error! Status: ${res.status}`);
+        const fetchMessage = async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                
+                const response = await fetch("http://localhost:8080/message");
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
                 }
-                return res.json();
-            })
-            .then((data) => {
+                
+                const data = await response.json();
                 setMessage(data.message);
-            })
-            .catch((e) => console.error("Fetch error:", e));
-    }, [token]); // tokenが変更されたときにuseEffectを再実行
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Unknown error');
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    return message;
+        fetchMessage();
+    }, []);
+
+    return { message, loading, error };
 };
-
-export default useFetchMessages;
