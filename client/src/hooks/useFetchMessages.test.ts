@@ -3,7 +3,8 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useFetchMessages } from './useFetchMessages'
 
 // fetch APIをモック
-global.fetch = vi.fn()
+// vitestの環境でglobalオブジェクトを明示的に型アサーションで使用
+(globalThis as any).fetch = vi.fn()
 
 describe('useFetchMessages', () => {
   beforeEach(() => {

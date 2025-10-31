@@ -16,8 +16,9 @@ const LoginForm = () => {
     }
   };
 
+  // Google OAuth開始URLを新しいv1パスへ更新（旧パスはサーバー側で互換維持）
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:8080/auth/google/login";
+    window.location.href = "http://localhost:8080/api/v1/auth/oauth/google/login";
   };
 
   return (
