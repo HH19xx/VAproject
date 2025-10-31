@@ -30,11 +30,20 @@ func corsMiddleware(next http.Handler) http.Handler {
 // JWT認証ミドルウェア。除外パスを設定し、JWT認証を適用する。
 func jwtProtectedMux(mux *http.ServeMux) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// 除外パスの設定
+		// 除外パスの設定: 未認証でもアクセス可能なエンドポイントを列挙します。
+		// 互換性維持のため旧パスも残しつつ、新API仕様に沿った /api/v1 配下も許可します。
 		publicPaths := []string{
+			"/",
+			"/message",
+			// legacy
 			"/login",
-			"/auth/google/login",
-			"/auth/google/callback",
+			"/auth/oauth/google/login",
+			"/auth/oauth/google/callback",
+			// v1
+			"/api/v1/auth/login",
+			"/api/v1/auth/refresh",
+			"/api/v1/auth/oauth/google/login",
+			"/api/v1/auth/oauth/google/callback",
 		}
 		for _, path := range publicPaths {
 			if r.URL.Path == path {
@@ -61,21 +70,45 @@ func main() {
 		log.Fatalf("マイグレーション失敗: %v", err)
 	}
 
+	// テストデータのマイグレーション実行（test_dataディレクトリが存在する場合のみ）
+	if err := db.RunTestDataMigrations(conn); err != nil {
+		log.Fatalf("テストデータのマイグレーション失敗: %v", err)
+	}
+
 	// ユースケースおよびハンドラの構築
 	userRepo := repository.NewUserRepository(conn)
-	userUsecase := &usecases.UserUsecase{Repo: userRepo}
+	refreshRepo := repository.NewRefreshTokenRepository(conn)
+	userUsecase := &usecases.UserUsecase{Repo: userRepo, RefreshRepo: refreshRepo}
 	userHandler := &handler.UserHandler{Usecase: userUsecase}
 
 	// HTTPルーティング設定
 	mux := http.NewServeMux()
-	mux.HandleFunc("/login", userHandler.LoginHandler())
-	mux.HandleFunc("/me", userHandler.MeHandler())
+
+	// ルートパス用のシンプルなハンドラ
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/" {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"message": "VAproject API Server", "oauth_login": "/auth/oauth/google/login"}`))
+	})
+	// v1 auth endpoints
+	mux.HandleFunc("/api/v1/auth/login", userHandler.LoginHandler())
+	mux.HandleFunc("/api/v1/auth/me", userHandler.MeHandler())
+	mux.HandleFunc("/api/v1/auth/refresh", userHandler.RefreshHandler())
 	mux.HandleFunc("/message", handler.Handler)
 
 	// Google OAuthのハンドラを設定
 	oauthHandler := &handler.OAuthHandler{Usecase: userUsecase}
-	mux.HandleFunc("/auth/google/login", oauthHandler.GoogleLoginHandler())
-	mux.HandleFunc("/auth/google/callback", oauthHandler.GoogleCallbackHandler())
+	mux.HandleFunc("/api/v1/auth/oauth/google/login", oauthHandler.GoogleLoginHandler())
+	mux.HandleFunc("/api/v1/auth/oauth/google/callback", oauthHandler.GoogleCallbackHandler())
+
+	// backward-compatible legacy routes (temporary)
+	mux.HandleFunc("/login", userHandler.LoginHandler())
+	mux.HandleFunc("/me", userHandler.MeHandler())
+	mux.HandleFunc("/auth/oauth/google/login", oauthHandler.GoogleLoginHandler())
+	mux.HandleFunc("/auth/oauth/google/callback", oauthHandler.GoogleCallbackHandler())
 
 	// JWT認証とCORSミドルウェアを順に適用
 	handlerWithAuth := jwtProtectedMux(mux)

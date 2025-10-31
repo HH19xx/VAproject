@@ -17,18 +17,23 @@ type Claims struct {
 }
 
 // JWTトークンを生成する
-func GenerateJWT(userID int) (string, error) {
-	expirationTime := time.Now().Add(1 * time.Hour)
-	claims := &Claims{
-		UserID: userID,
-		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(expirationTime),
-		},
-	}
+func GenerateJWT(userID int, expiresIn time.Duration) (string, time.Time, error) {
+    // 指定された有効期限を現在時刻から加算し、RegisteredClaimsに設定します。
+    expirationTime := time.Now().Add(expiresIn)
+    claims := &Claims{
+        UserID: userID,
+        RegisteredClaims: jwt.RegisteredClaims{
+            ExpiresAt: jwt.NewNumericDate(expirationTime),
+        },
+    }
 
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+    token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	return token.SignedString(jwtKey)
+    signed, err := token.SignedString(jwtKey)
+    if err != nil {
+        return "", time.Time{}, err
+    }
+    return signed, expirationTime, nil
 }
 
 // JWTトークンを検証する

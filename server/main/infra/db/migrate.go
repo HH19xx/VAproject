@@ -13,6 +13,7 @@ func RunMigrations(db *sql.DB) error {
 	// 適用するマイグレーションファイル一覧（順序が大切）を配列に入れる
 	migrationFiles := []string{
 		"0001_create_users.up.sql",
+		"0003_create_refresh_tokens.up.sql",
 		"0001_create_targets.up.sql",
 		"0001_create_action_types.sql",
 		"0001_create_custom_actions.up.sql",
@@ -41,5 +42,60 @@ func RunMigrations(db *sql.DB) error {
 	}
 
 	log.Println("すべてのマイグレーションが正常に適用されました。")
+	return nil
+}
+
+// RunTestDataMigrations は、test_dataディレクトリ内のSQLファイルを順に読み込み、テストデータをDBに挿入します。
+// test_dataディレクトリが存在しない、または空の場合は何も実行せず、本番環境とみなします。
+func RunTestDataMigrations(db *sql.DB) error {
+	// test_dataディレクトリのパスを指定
+	testDataPath := "main/infra/db/migrations/test_data"
+
+	// test_dataディレクトリ内のファイル一覧を取得
+	files, err := ioutil.ReadDir(testDataPath)
+	if err != nil {
+		// ディレクトリが存在しない場合は本番環境とみなし、ログを出力して正常終了
+		log.Println("test_dataディレクトリが存在しないため、テストデータのマイグレーションをスキップします（本番環境）")
+		return nil
+	}
+
+	// ディレクトリが空の場合も本番環境とみなす
+	if len(files) == 0 {
+		log.Println("test_dataディレクトリが空のため、テストデータのマイグレーションをスキップします（本番環境）")
+		return nil
+	}
+
+	log.Println("テストデータのマイグレーションを開始します（開発/テスト環境）")
+
+	// test_dataディレクトリ内のSQLファイルを順に適用
+	for _, file := range files {
+		// ディレクトリはスキップ
+		if file.IsDir() {
+			continue
+		}
+
+		// .sqlファイルのみ処理
+		if filepath.Ext(file.Name()) != ".sql" {
+			continue
+		}
+
+		fullPath := filepath.Join(testDataPath, file.Name())
+
+		// SQLファイルを読み込む
+		sqlBytes, err := ioutil.ReadFile(fullPath)
+		if err != nil {
+			return fmt.Errorf("テストデータファイルの読み込みに失敗しました (%s): %w", fullPath, err)
+		}
+
+		// 適用しているSQLをログに出力
+		log.Printf("テストデータ実行中: %s\n", file.Name())
+
+		// SQLを実行
+		if _, err := db.Exec(string(sqlBytes)); err != nil {
+			return fmt.Errorf("テストデータSQL実行に失敗しました (%s): %w", file.Name(), err)
+		}
+	}
+
+	log.Println("すべてのテストデータが正常に適用されました。")
 	return nil
 }

@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS users (
 
 
 -- 初期管理者ユーザー（パスワードはハッシュ化して登録することを推奨）
+-- 既にデータが存在する場合はスキップする
 INSERT INTO users (
     username,
     email,
@@ -21,7 +22,8 @@ INSERT INTO users (
     create_user,
     updated_at,
     update_user
-) VALUES (
+)
+SELECT
     'admin',
     'admin@example.com',
     '$2a$10$dummyhashforadmin',
@@ -29,4 +31,6 @@ INSERT INTO users (
     'system',
     CURRENT_TIMESTAMP,
     'system'
+WHERE NOT EXISTS (
+    SELECT 1 FROM users WHERE username = 'admin'
 );

@@ -5,6 +5,9 @@ services:
     image: postgres:15
     container_name: postgres_db
     restart: always
+    # .envファイルを同じディレクトリから読み込み
+    env_file:
+      - .env
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -28,12 +31,18 @@ services:
       - "8080:8080"
     networks:
       - backend
+    # .envファイルを同じディレクトリから読み込み
+    env_file:
+      - .env
     environment:
       - DB_HOST=db
       - DB_PORT=${DB_PORT:-5432}
       - DB_USER=${POSTGRES_USER}
       - DB_PASSWORD=${POSTGRES_PASSWORD}
       - DB_NAME=${POSTGRES_DB}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URL=${GOOGLE_REDIRECT_URL}
     working_dir: /server
     command: ./server
 
