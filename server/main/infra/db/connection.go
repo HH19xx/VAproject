@@ -13,7 +13,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-// NewPostgresConnection establishes a PostgreSQL connection with retry logic.
+// PostgreSQLデータベースへの接続を確立し、*sql.DBを返す
 func NewPostgresConnection() (*sql.DB, error) {
 	host := getEnv("DB_HOST", "localhost")
 	portStr := getEnv("DB_PORT", "5432")

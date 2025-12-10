@@ -1,0 +1,14 @@
+# すべてのファイルにLF改行コードを強制適用
+* text=auto eol=lf
+
+# バイナリファイルは改行コード変換を無効化
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.exe binary
+*.dll binary
+*.so binary
+*.dylib binary

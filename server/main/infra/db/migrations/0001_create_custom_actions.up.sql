@@ -5,8 +5,9 @@ CREATE TABLE IF NOT EXISTS custom_actions (
     target_id INT REFERENCES targets(id),
     action_type_id INT REFERENCES action_types(id),
     notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    create_user INT REFERENCES users(id),
     updated_at TIMESTAMP NOT NULL,
     update_user INT REFERENCES users(id),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    create_user INT REFERENCES users(id)
+    deleted_at TIMESTAMP DEFAULT NULL
 );

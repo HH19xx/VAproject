@@ -1,6 +1,6 @@
 package domain
 
-// User はシステム内で扱うユーザーのエンティティです。
+// User はシステム内で扱うユーザーのエンティティ
 type User struct {
 	ID       int
 	Name     string

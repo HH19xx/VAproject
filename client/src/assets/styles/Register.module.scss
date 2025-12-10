@@ -1,0 +1,95 @@
+// ユーザー登録ページ専用スタイル（Loginと共通デザイン）
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 1rem;
+}
+
+.card {
+  background: white;
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 420px;
+
+  h1 {
+    margin: 0 0 2rem 0;
+    color: var(--primary-color);
+    font-size: 2rem;
+    text-align: center;
+  }
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  label {
+    font-weight: 500;
+    color: var(--text-color);
+    font-size: 0.9rem;
+  }
+
+  input {
+    padding: 0.75rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+
+    &:focus {
+      outline: none;
+      border-color: var(--primary-color);
+    }
+
+    &:disabled {
+      background-color: #f5f5f5;
+      cursor: not-allowed;
+    }
+  }
+}
+
+.error {
+  color: var(--error-color);
+  font-size: 0.9rem;
+  margin: 0;
+  padding: 0.5rem;
+  background-color: #fee;
+  border-radius: 4px;
+  border-left: 3px solid var(--error-color);
+}
+
+.linkText {
+  text-align: center;
+  margin-top: 1.5rem;
+  color: #666;
+  font-size: 0.9rem;
+
+  a {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-weight: 500;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+// レスポンシブ対応
+@media (max-width: 768px) {
+  .card {
+    padding: 2rem 1.5rem;
+  }
+}

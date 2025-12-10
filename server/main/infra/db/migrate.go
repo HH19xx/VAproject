@@ -8,12 +8,13 @@ import (
 	"path/filepath"
 )
 
-// RunMigrations は、マイグレーション用のSQLファイルを順に読み込み、DBに適用します。
+// マイグレーション用のSQLファイルを順に読み込みDBに適用
 func RunMigrations(db *sql.DB) error {
-	// 適用するマイグレーションファイル一覧（順序が大切）を配列に入れる
+	// 適用するマイグレーションファイル一覧を配列に入れる
 	migrationFiles := []string{
 		"0001_create_users.up.sql",
 		"0003_create_refresh_tokens.up.sql",
+		"0004_create_user_auth_providers.up.sql",
 		"0001_create_targets.up.sql",
 		"0001_create_action_types.sql",
 		"0001_create_custom_actions.up.sql",
@@ -45,8 +46,8 @@ func RunMigrations(db *sql.DB) error {
 	return nil
 }
 
-// RunTestDataMigrations は、test_dataディレクトリ内のSQLファイルを順に読み込み、テストデータをDBに挿入します。
-// test_dataディレクトリが存在しない、または空の場合は何も実行せず、本番環境とみなします。
+// test_dataディレクトリ内のSQLファイルを順に読み込みテストデータをDBに挿入
+// test_dataディレクトリが存在しないまたは空の場合は何も実行せず本番環境とみなす
 func RunTestDataMigrations(db *sql.DB) error {
 	// test_dataディレクトリのパスを指定
 	testDataPath := "main/infra/db/migrations/test_data"

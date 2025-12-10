@@ -6,20 +6,20 @@ import (
 	"server/main/domain"
 )
 
-// userRepository は UserRepository インターフェースの具体実装です。
+// UserRepositoryインターフェースの具体実装
 type userRepository struct {
 	db *sql.DB
 }
 
-// NewUserRepository は userRepository の生成関数です。
+// userRepositoryの生成関数。
 func NewUserRepository(db *sql.DB) *userRepository {
 	return &userRepository{db: db}
 }
 
-// FindByName はユーザー名でユーザーを検索し、見つかれば User エンティティを返します。
+// ユーザー名で検索しUserエンティティを返す（論理削除済みを除外）
 func (r *userRepository) FindByName(ctx context.Context, name string) (*domain.User, error) {
 	var user domain.User
-	err := r.db.QueryRowContext(ctx, "SELECT id, username, email, password_hash FROM users WHERE username = $1", name).
+	err := r.db.QueryRowContext(ctx, "SELECT id, username, email, password_hash FROM users WHERE username = $1 AND deleted_at IS NULL", name).
 		Scan(&user.ID, &user.Name, &user.Email, &user.Password)
 
 	if err != nil {
@@ -28,10 +28,10 @@ func (r *userRepository) FindByName(ctx context.Context, name string) (*domain.U
 	return &user, nil
 }
 
-// FindByEmail はOAuthで使うemailからユーザーを検索します。
+// emailで検索しユーザーを返す（OAuth用、論理削除済みを除外）
 func (r *userRepository) FindByEmail(ctx context.Context, email string) (*domain.User, error) {
 	var user domain.User
-	err := r.db.QueryRowContext(ctx, "SELECT id, username, email FROM users WHERE email = $1", email).
+	err := r.db.QueryRowContext(ctx, "SELECT id, username, email FROM users WHERE email = $1 AND deleted_at IS NULL", email).
 		Scan(&user.ID, &user.Name, &user.Email)
 
 	if err != nil {
@@ -40,12 +40,34 @@ func (r *userRepository) FindByEmail(ctx context.Context, email string) (*domain
 	return &user, nil
 }
 
-// Create は指定されたユーザー（主にOAuthユーザー）を登録します。
+// ユーザーを登録
 func (r *userRepository) Create(ctx context.Context, user *domain.User) (int, error) {
 	err := r.db.QueryRowContext(ctx, `
-		INSERT INTO users (username, email, password_hash, create_user, update_user) 
-		VALUES ($1, $2, '', 'oauth', 'oauth') 
-		RETURNING id`, 
-		user.Name, user.Email).Scan(&user.ID)
+		INSERT INTO users (username, email, password_hash, create_user, update_user)
+		VALUES ($1, $2, $3, 'system', 'system')
+		RETURNING id`,
+		user.Name, user.Email, user.Password).Scan(&user.ID)
 	return user.ID, err
+}
+
+// ユーザーIDで情報を取得（プロフィール編集用、論理削除済みを除外）
+func (r *userRepository) FindByID(ctx context.Context, userID int) (*domain.User, error) {
+	var user domain.User
+	err := r.db.QueryRowContext(ctx, "SELECT id, username, email FROM users WHERE id = $1 AND deleted_at IS NULL", userID).
+		Scan(&user.ID, &user.Name, &user.Email)
+
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+// ユーザー名を更新（プロフィール編集用）
+func (r *userRepository) UpdateName(ctx context.Context, userID int, newName string) error {
+	_, err := r.db.ExecContext(ctx, `
+		UPDATE users
+		SET username = $1, update_user = 'system', updated_at = CURRENT_TIMESTAMP
+		WHERE id = $2`,
+		newName, userID)
+	return err
 }

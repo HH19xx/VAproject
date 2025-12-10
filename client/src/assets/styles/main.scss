@@ -1,0 +1,5 @@
+// グローバルスタイルのエントリーポイント
+// @forwardでグローバルスコープに展開（@useだとスコープ化されてしまう）
+@forward 'variables';
+@forward 'reset';
+@forward 'common';

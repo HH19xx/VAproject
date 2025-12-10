@@ -2,6 +2,7 @@
 node_modules/
 public/
 .env
+.gitignore
 
 # フロントエンド
 # Logs
@@ -28,5 +29,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-.github/
+
+client_*
+server_*
+docs
+
+.vscode/
+.claude/
 CLAUDE.md

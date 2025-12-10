@@ -1,73 +1,73 @@
 package repository
 
 import (
-    "context"
-    "database/sql"
-    "errors"
-    "time"
+	"context"
+	"database/sql"
+	"errors"
+	"time"
 
-    "server/main/domain"
+	"server/main/domain"
 )
 
-// RefreshTokenRepository はリフレッシュトークン操作の具象実装です。
+// リフレッシュトークン操作の具象実装
 type RefreshTokenRepository struct {
-    db *sql.DB
+	db *sql.DB
 }
 
-// NewRefreshTokenRepository はリフレッシュトークン用リポジトリを生成します。
+// リフレッシュトークン用リポジトリを生成。
 func NewRefreshTokenRepository(db *sql.DB) *RefreshTokenRepository {
-    return &RefreshTokenRepository{db: db}
+	return &RefreshTokenRepository{db: db}
 }
 
-// Create は新規リフレッシュトークンを保存します。
+// 新規リフレッシュトークンを保存
 func (r *RefreshTokenRepository) Create(ctx context.Context, token *domain.RefreshToken) error {
-    const query = `
+	const query = `
         INSERT INTO refresh_tokens (user_id, token_hash, expires_at, revoked, created_at, create_user, updated_at, update_user)
         VALUES ($1, $2, $3, $4, NOW(), $5, NOW(), $6)
         RETURNING id, created_at, updated_at
     `
 
-    return r.db.QueryRowContext(ctx, query,
-        token.UserID,
-        token.TokenHash,
-        token.ExpiresAt,
-        token.Revoked,
-        token.CreateUser,
-        token.UpdateUser,
-    ).Scan(&token.ID, &token.CreatedAt, &token.UpdatedAt)
+	return r.db.QueryRowContext(ctx, query,
+		token.UserID,
+		token.TokenHash,
+		token.ExpiresAt,
+		token.Revoked,
+		token.CreateUser,
+		token.UpdateUser,
+	).Scan(&token.ID, &token.CreatedAt, &token.UpdatedAt)
 }
 
-// FindByHash はハッシュ値でリフレッシュトークンを検索します。
+// ハッシュ値で検索
 func (r *RefreshTokenRepository) FindByHash(ctx context.Context, hash string) (*domain.RefreshToken, error) {
-    const query = `
+	const query = `
         SELECT id, user_id, token_hash, expires_at, revoked, created_at, create_user, updated_at, update_user
         FROM refresh_tokens
         WHERE token_hash = $1
         LIMIT 1
     `
 
-    token := &domain.RefreshToken{}
-    err := r.db.QueryRowContext(ctx, query, hash).Scan(
-        &token.ID,
-        &token.UserID,
-        &token.TokenHash,
-        &token.ExpiresAt,
-        &token.Revoked,
-        &token.CreatedAt,
-        &token.CreateUser,
-        &token.UpdatedAt,
-        &token.UpdateUser,
-    )
+	token := &domain.RefreshToken{}
+	err := r.db.QueryRowContext(ctx, query, hash).Scan(
+		&token.ID,
+		&token.UserID,
+		&token.TokenHash,
+		&token.ExpiresAt,
+		&token.Revoked,
+		&token.CreatedAt,
+		&token.CreateUser,
+		&token.UpdatedAt,
+		&token.UpdateUser,
+	)
 
-    if err != nil {
-        return nil, err
-    }
-    return token, nil
+	if err != nil {
+		return nil, err
+	}
+	return token, nil
 }
 
-// Revoke は指定IDのリフレッシュトークンを失効させます。
+// 指定IDのリフレッシュトークンを失効
 func (r *RefreshTokenRepository) Revoke(ctx context.Context, id int, updateUser string) error {
-    const query = `
+	const query = `
         UPDATE refresh_tokens
         SET revoked = TRUE,
             updated_at = NOW(),
@@ -75,31 +75,31 @@ func (r *RefreshTokenRepository) Revoke(ctx context.Context, id int, updateUser 
         WHERE id = $2
     `
 
-    res, err := r.db.ExecContext(ctx, query, updateUser, id)
-    if err != nil {
-        return err
-    }
+	res, err := r.db.ExecContext(ctx, query, updateUser, id)
+	if err != nil {
+		return err
+	}
 
-    rows, err := res.RowsAffected()
-    if err != nil {
-        return err
-    }
-    if rows == 0 {
-        return errors.New("refresh token not found")
-    }
-    return nil
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return errors.New("refresh token not found")
+	}
+	return nil
 }
 
-// DeleteExpired は期限切れトークンを削除します（メンテ用）。
+// 期限切れトークンを削除（メンテ用）
 func (r *RefreshTokenRepository) DeleteExpired(ctx context.Context, threshold time.Time) (int64, error) {
-    const query = `
+	const query = `
         DELETE FROM refresh_tokens
         WHERE expires_at < $1
     `
 
-    res, err := r.db.ExecContext(ctx, query, threshold)
-    if err != nil {
-        return 0, err
-    }
-    return res.RowsAffected()
+	res, err := r.db.ExecContext(ctx, query, threshold)
+	if err != nil {
+		return 0, err
+	}
+	return res.RowsAffected()
 }

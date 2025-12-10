@@ -10,7 +10,7 @@ type Message struct {
 	Message string `json:"message"`
 }
 
-// Handlerは/messageエンドポイントの処理を行う
+// messageエンドポイントの処理を行う
 func Handler(w http.ResponseWriter, r *http.Request) {
 	response := Message{Message: "こんにちは、みなさん"}
 

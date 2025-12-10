@@ -7,13 +7,13 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
-// GoogleOAuthConfig はGoogle OAuth2.0設定を返す関数
+// Google OAuth2.0設定を返す関数
 func GetGoogleOAuthConfig() *oauth2.Config {
 	redirectURL := os.Getenv("GOOGLE_REDIRECT_URL")
 	if redirectURL == "" {
-		redirectURL = "http://localhost:8080/auth/oauth/google/callback"
+		redirectURL = "http://localhost:8080/api/v1/auth/oauth/google/callback"
 	}
-	
+
 	return &oauth2.Config{
 		ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 		ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
