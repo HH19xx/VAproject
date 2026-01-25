@@ -10,8 +10,8 @@ import (
 	"net/url"
 	"time"
 
-	"server/main/app/usecases"
 	"server/main/infra/oauth"
+	"server/main/usecases"
 
 	"google.golang.org/api/oauth2/v2"
 )

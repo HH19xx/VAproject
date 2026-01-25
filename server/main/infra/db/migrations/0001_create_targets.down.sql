@@ -1,3 +1,3 @@
 -- マイグレーションのロールバック時にtargetsテーブルとそのインデックスを削除する
-DROP INDEX IF EXISTS idx_targets_not_deleted;
+DROP INDEX IF EXISTS unique_active_target_name;
 DROP TABLE IF EXISTS targets;

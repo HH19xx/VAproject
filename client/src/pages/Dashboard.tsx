@@ -63,7 +63,10 @@ const Dashboard = () => {
               <button className="btn-primary" onClick={() => navigate("/targets/new")}>
                 観察対象を追加
               </button>
-              <button className="btn-primary" disabled>
+              <button className="btn-primary" onClick={() => navigate("/actions")}>
+                行動管理
+              </button>
+              <button className="btn-primary" onClick={() => navigate("/actions/new")}>
                 行動を記録
               </button>
               <button className="btn-primary" disabled>

@@ -21,10 +21,6 @@ interface Pagination {
 }
 
 // APIレスポンスの型定義
-interface TargetsResponse {
-  targets: Target[];
-  pagination: Pagination;
-}
 
 // useTargetsフック: 観察対象のCRUD操作を提供
 export const useTargets = () => {
@@ -76,7 +72,6 @@ export const useTargets = () => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "観察対象の取得に失敗しました";
       setError(errorMessage);
-      console.error("fetchTargets error:", err);
     } finally {
       setLoading(false);
     }
@@ -98,7 +93,6 @@ export const useTargets = () => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "観察対象の取得に失敗しました";
       setError(errorMessage);
-      console.error("fetchTargetByID error:", err);
       return null;
     } finally {
       setLoading(false);
@@ -127,7 +121,6 @@ export const useTargets = () => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "観察対象の作成に失敗しました";
       setError(errorMessage);
-      console.error("createTarget error:", err);
       return null;
     } finally {
       setLoading(false);
@@ -156,7 +149,6 @@ export const useTargets = () => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "観察対象の更新に失敗しました";
       setError(errorMessage);
-      console.error("updateTarget error:", err);
       return null;
     } finally {
       setLoading(false);
@@ -183,7 +175,6 @@ export const useTargets = () => {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : "観察対象の削除に失敗しました";
       setError(errorMessage);
-      console.error("deleteTarget error:", err);
       return false;
     } finally {
       setLoading(false);

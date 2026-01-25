@@ -7,50 +7,41 @@ import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import Targets from "./pages/Targets";
 import TargetForm from "./pages/TargetForm";
+import Actions from "./pages/Actions";
+import ActionForm from "./pages/ActionForm";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function AppRoutes() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // OAuth コールバックのパラメータを拾う処理
+  // OAuth コールバックから戻った場合にクエリを読み取り、トークンを保存する
   useEffect(() => {
-    console.log("[AppRoutes] 初期化: 現在URL =", window.location.href);
-
     const params = new URLSearchParams(window.location.search);
     const token = params.get("token");
     const refresh = params.get("refresh");
     const expires = params.get("expires");
 
-    console.log(
-      "[AppRoutes] OAuthパラメータ取得:",
-      "token =", token,
-      "refresh =", refresh,
-      "expires =", expires
-    );
-
     if (token && refresh) {
-      console.log("[AppRoutes] localStorage にトークンを保存します");
-      localStorage.setItem("token", token);
-      localStorage.setItem("refresh_token", refresh);
-      if (expires) {
-        localStorage.setItem("token_expires_at", expires);
+      try {
+        localStorage.setItem("token", token);
+        localStorage.setItem("refresh_token", refresh);
+        if (expires) {
+          localStorage.setItem("token_expires_at", expires);
+        }
+      } catch {
+        // localStorage が利用できない場合は無視
       }
 
-      // URL クエリを消す
-      console.log("[AppRoutes] URL クエリを削除します");
+      // クエリを除去
       window.history.replaceState({}, document.title, window.location.pathname);
-
-      console.log("[AppRoutes] /dashboard へ navigate します");
       navigate("/dashboard", { replace: true });
-    } else {
-      console.log("[AppRoutes] OAuthパラメータなし（通常のページ表示）");
     }
   }, [navigate]);
 
-  // ルーティングが変わるたびのログ（確認用）
+  // ページ遷移時の副作用が必要ならここで実装（現状は何もしない）
   useEffect(() => {
-    console.log("[AppRoutes] ルート変更:", location.pathname, location.search);
+    void location;
   }, [location]);
 
   return (
@@ -95,6 +86,30 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <TargetForm />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/actions"
+        element={
+          <ProtectedRoute>
+            <Actions />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/actions/new"
+        element={
+          <ProtectedRoute>
+            <ActionForm />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/actions/:id/edit"
+        element={
+          <ProtectedRoute>
+            <ActionForm />
           </ProtectedRoute>
         }
       />

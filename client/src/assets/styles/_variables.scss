@@ -3,9 +3,21 @@
   --primary-color: #646cff;
   --secondary-color: #535bf2;
   --text-color: #213547;
+  --text-muted: #666666;
   --bg-color: #ffffff;
   --card-bg: #f9f9f9;
   --border-color: #e0e0e0;
   --error-color: #ef4444;
   --success-color: #10b981;
 }
+
+// Sass variables (CSSカスタムプロパティと同値で用意)
+$primary: #646cff;
+$secondary: #535bf2;
+$text-primary: #213547;
+$text-muted: #666666;
+$bg-color: #ffffff;
+$card-bg: #f9f9f9;
+$border-color: #e0e0e0;
+$error-color: #ef4444;
+$success-color: #10b981;

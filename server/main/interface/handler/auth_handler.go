@@ -6,15 +6,15 @@ import (
 	"net/http"
 	"time"
 
-	"server/main/app/usecases"
+	"server/main/usecases"
 )
 
-// ユーザー関連エンドポイントに必要な依存をまとめた構造体。
+// ユーザー関連エンドポイントのハンドラー
 type UserHandler struct {
 	Usecase *usecases.UserUsecase
 }
 
-// 新規ユーザー登録用のHTTPハンドラ。
+// 新規ユーザー登録
 func (h *UserHandler) RegisterHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
@@ -22,7 +22,7 @@ func (h *UserHandler) RegisterHandler() http.HandlerFunc {
 			Password string `json:"password"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			log.Printf("RegisterHandler: リクエストのデコード失敗: %v", err)
+			log.Printf("RegisterHandler: リクエストデコード失敗 %v", err)
 			JSONError(w, http.StatusBadRequest, "BAD_REQUEST", "入力エラー", nil)
 			return
 		}
@@ -39,15 +39,13 @@ func (h *UserHandler) RegisterHandler() http.HandlerFunc {
 
 		log.Printf("RegisterHandler: 登録成功 - userID=%d", userID)
 
-		// 登録後、自動的にログイン処理を行いトークンを発行します。
+		// 登録後にアクセストークンを発行
 		tokens, err := h.Usecase.IssueTokens(ctx, userID, "auth")
 		if err != nil {
 			log.Printf("RegisterHandler: トークン生成失敗 - userID=%d, error=%v", userID, err)
-			JSONError(w, http.StatusInternalServerError, "TOKEN_ERROR", "トークン生成失敗", nil)
+			JSONError(w, http.StatusInternalServerError, "TOKEN_ERROR", "トークン生成に失敗しました", nil)
 			return
 		}
-
-		log.Printf("RegisterHandler: 登録完了 - userID=%d", userID)
 
 		JSONSuccess(w, http.StatusCreated, map[string]interface{}{
 			"user_id":                 userID,
@@ -58,7 +56,7 @@ func (h *UserHandler) RegisterHandler() http.HandlerFunc {
 	}
 }
 
-// ログイン用のHTTPハンドラ。
+// ログイン
 func (h *UserHandler) LoginHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req struct {
@@ -66,7 +64,7 @@ func (h *UserHandler) LoginHandler() http.HandlerFunc {
 			Password string `json:"password"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			log.Printf("LoginHandler: リクエストのデコード失敗: %v", err)
+			log.Printf("LoginHandler: リクエストデコード失敗 %v", err)
 			JSONError(w, http.StatusBadRequest, "BAD_REQUEST", "入力エラー", nil)
 			return
 		}
@@ -77,7 +75,7 @@ func (h *UserHandler) LoginHandler() http.HandlerFunc {
 		userID, err := h.Usecase.Login(ctx, req.Name, req.Password)
 		if err != nil {
 			log.Printf("LoginHandler: 認証失敗 - name=%s, error=%v", req.Name, err)
-			JSONError(w, http.StatusUnauthorized, "UNAUTHORIZED", "認証失敗", nil)
+			JSONError(w, http.StatusUnauthorized, "UNAUTHORIZED", "認証に失敗しました", nil)
 			return
 		}
 
@@ -86,11 +84,9 @@ func (h *UserHandler) LoginHandler() http.HandlerFunc {
 		tokens, err := h.Usecase.IssueTokens(ctx, userID, "auth")
 		if err != nil {
 			log.Printf("LoginHandler: トークン生成失敗 - userID=%d, error=%v", userID, err)
-			JSONError(w, http.StatusInternalServerError, "TOKEN_ERROR", "トークン生成失敗", nil)
+			JSONError(w, http.StatusInternalServerError, "TOKEN_ERROR", "トークン生成に失敗しました", nil)
 			return
 		}
-
-		log.Printf("LoginHandler: ログイン完了 - userID=%d", userID)
 
 		JSONSuccess(w, http.StatusOK, map[string]interface{}{
 			"access_token":            tokens.AccessToken,
@@ -100,7 +96,7 @@ func (h *UserHandler) LoginHandler() http.HandlerFunc {
 	}
 }
 
-// ログイン済みユーザーの情報を返すエンドポイント
+// 認証済みユーザー情報
 func (h *UserHandler) MeHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID := r.Context().Value("userID").(int)
@@ -110,10 +106,9 @@ func (h *UserHandler) MeHandler() http.HandlerFunc {
 	}
 }
 
-// 認証済みユーザーのプロフィール情報を取得するハンドラ
+// プロフィール取得
 func (h *UserHandler) GetProfileHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// 認証ミドルウェアからユーザーIDを取得する
 		userID := r.Context().Value("userID").(int)
 
 		log.Printf("GetProfileHandler: プロフィール取得試行 - userID=%d", userID)
@@ -137,17 +132,16 @@ func (h *UserHandler) GetProfileHandler() http.HandlerFunc {
 	}
 }
 
-// 認証済みユーザーのプロフィール情報を更新するハンドラ
+// プロフィール更新
 func (h *UserHandler) UpdateProfileHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// 認証ミドルウェアからユーザーIDを取得する
 		userID := r.Context().Value("userID").(int)
 
 		var req struct {
 			Name string `json:"name"`
 		}
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			log.Printf("UpdateProfileHandler: リクエストのデコード失敗: %v", err)
+			log.Printf("UpdateProfileHandler: リクエストデコード失敗 %v", err)
 			JSONError(w, http.StatusBadRequest, "BAD_REQUEST", "入力エラー", nil)
 			return
 		}
@@ -169,7 +163,7 @@ func (h *UserHandler) UpdateProfileHandler() http.HandlerFunc {
 	}
 }
 
-// リフレッシュトークンを受け取りアクセストークンを再発行するハンドラ
+// リフレッシュトークンでアクセストークンを再発行
 func (h *UserHandler) RefreshHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req struct {

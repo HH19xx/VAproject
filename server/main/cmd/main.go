@@ -3,12 +3,13 @@ package main
 import (
 	"log"
 	"net/http"
+	"strings"
 
-	"server/main/app/usecases"
 	"server/main/infra/db"
 	"server/main/infra/repository"
 	"server/main/interface/handler"
 	"server/main/interface/middleware"
+	"server/main/usecases"
 )
 
 // CORSミドルウェア（暫定）
@@ -91,6 +92,19 @@ func main() {
 	targetUsecase := &usecases.TargetUsecase{Repo: targetRepo}
 	targetHandler := &handler.TargetHandler{Usecase: targetUsecase}
 
+	actionLogRepo := repository.NewActionLogRepository(conn)
+	actionLogUsecase := &usecases.ActionLogUsecase{Repo: actionLogRepo}
+	actionLogHandler := &handler.ActionLogHandler{Usecase: actionLogUsecase}
+
+	actionTypeRepo := repository.NewActionTypeRepository(conn)
+	actionTypeUsecase := &usecases.ActionTypeUsecase{Repo: actionTypeRepo}
+	actionTypeHandler := &handler.ActionTypeHandler{Usecase: actionTypeUsecase}
+
+	// 対象と行動種別の紐づけユースケースおよびハンドラを構築
+	targetActionTypeRepo := repository.NewTargetActionTypeRepository(conn)
+	targetActionTypeUsecase := &usecases.TargetActionTypeUsecase{Repo: targetActionTypeRepo}
+	targetActionTypeHandler := &handler.TargetActionTypeHandler{Usecase: targetActionTypeUsecase}
+
 	// HTTPルーティング設定
 	mux := http.NewServeMux()
 
@@ -135,7 +149,47 @@ func main() {
 			handler.JSONError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "このエンドポイントはGETまたはPOSTメソッドのみ対応しています", nil)
 		}
 	})
-	mux.HandleFunc("/api/v1/targets/", targetHandler.TargetDetailHandler())
+	mux.HandleFunc("/api/v1/targets/", func(w http.ResponseWriter, r *http.Request) {
+		// 対象と行動種別の紐づけ操作を優先的に処理
+		if strings.Contains(r.URL.Path, "/action-types") {
+			if r.Method == http.MethodGet {
+				targetActionTypeHandler.ListByTargetHandler()(w, r)
+			} else if r.Method == http.MethodPost {
+				targetActionTypeHandler.LinkHandler()(w, r)
+			} else if r.Method == http.MethodDelete {
+				targetActionTypeHandler.UnlinkHandler()(w, r)
+			} else {
+				handler.JSONError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "このエンドポイントはGET/POST/DELETEメソッドのみ対応しています", nil)
+			}
+			return
+		}
+
+		targetHandler.TargetDetailHandler()(w, r)
+	})
+
+	// 行動記録のエンドポイント（認証必須）
+	mux.HandleFunc("/api/v1/action_logs", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			actionLogHandler.ListHandler()(w, r)
+		} else if r.Method == http.MethodPost {
+			actionLogHandler.CreateHandler()(w, r)
+		} else {
+			handler.JSONError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "このエンドポイントはGETまたはPOSTメソッドのみ対応しています", nil)
+		}
+	})
+	mux.HandleFunc("/api/v1/action_logs/", actionLogHandler.DetailHandler())
+
+	// 行動種別のエンドポイント（認証必須）
+	mux.HandleFunc("/api/v1/action_types", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			actionTypeHandler.ListHandler()(w, r)
+		} else if r.Method == http.MethodPost {
+			actionTypeHandler.CreateHandler()(w, r)
+		} else {
+			handler.JSONError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "このエンドポイントはGETまたはPOSTメソッドのみ対応しています", nil)
+		}
+	})
+	mux.HandleFunc("/api/v1/action_types/", actionTypeHandler.DetailHandler())
 
 	// JWT認証とCORSミドルウェアを順に適用
 	handlerWithAuth := jwtProtectedMux(mux)

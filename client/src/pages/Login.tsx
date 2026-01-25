@@ -30,7 +30,6 @@ const Login = () => {
       navigate("/dashboard");
     } catch (err) {
       setError("ログインに失敗しました。ユーザー名とパスワードを確認してください。");
-      console.error("ログインエラー:", err);
     } finally {
       setLoading(false);
     }

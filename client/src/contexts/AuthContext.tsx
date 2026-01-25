@@ -24,10 +24,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // アクセストークンとリフレッシュトークンをlocalStorageと状態に保存
   const persistTokens = (accessToken: string, newRefreshToken: string) => {
-    console.log("[AuthContext] persistTokens 呼び出し:", {
-      accessToken: accessToken?.slice(0, 16) + "...",
-      newRefreshToken: newRefreshToken?.slice(0, 16) + "...",
-    });
 
     localStorage.setItem("token", accessToken);
     localStorage.setItem("refresh_token", newRefreshToken);
@@ -37,7 +33,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // 保存済みトークンを削除し、認証状態を初期化
   const clearTokens = () => {
-    console.log("[AuthContext] clearTokens 呼び出し: トークンと userID をクリアします");
     localStorage.removeItem("token");
     localStorage.removeItem("refresh_token");
     setToken(null);
@@ -47,9 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // リフレッシュトークンでアクセストークンを再取得
   const attemptRefresh = async () => {
-    console.log("[AuthContext] attemptRefresh 開始: refreshToken =", refreshToken?.slice(0, 16) + "...");
     if (!refreshToken) {
-      console.log("[AuthContext] attemptRefresh 中止: refreshToken がありません");
       throw new Error("no refresh token");
     }
 
@@ -59,19 +52,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       body: JSON.stringify({ refresh_token: refreshToken }),
     });
 
-    console.log("[AuthContext] /auth/refresh レスポンスステータス:", res.status);
 
     if (!res.ok) {
-      console.log("[AuthContext] /auth/refresh 失敗");
       throw new Error("refresh failed");
     }
 
     const body = await res.json();
-    console.log("[AuthContext] /auth/refresh レスポンスボディ:", body);
 
     const data = body?.data;
     if (!data?.access_token || !data?.refresh_token) {
-      console.log("[AuthContext] /auth/refresh レスポンス不正: data:", data);
       throw new Error("invalid refresh response");
     }
     persistTokens(data.access_token, data.refresh_token);
@@ -80,14 +69,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // ★ 初回マウント時にlocalStorageからトークンを読み込み（ここではloadingをfalseにしない）
   useEffect(() => {
-    console.log("[AuthContext] 初期化: localStorage からトークンを読み込みます");
     const storedToken = localStorage.getItem("token");
     const storedRefresh = localStorage.getItem("refresh_token");
 
-    console.log("[AuthContext] localStorage 読み取り:", {
-      storedToken: storedToken ? storedToken.slice(0, 16) + "..." : null,
-      storedRefresh: storedRefresh ? storedRefresh.slice(0, 16) + "..." : null,
-    });
 
     if (storedToken) setToken(storedToken);
     if (storedRefresh) setRefreshToken(storedRefresh);
@@ -102,20 +86,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const ensureSession = async () => {
       // ★ localStorage復元前なら何もしない
       if (!initialized) {
-        console.log("[AuthContext] ensureSession スキップ: initialized=false");
         return;
       }
 
-      console.log("[AuthContext] ensureSession 開始:", {
-        token: token ? token.slice(0, 16) + "..." : null,
-        refreshToken: refreshToken ? refreshToken.slice(0, 16) + "..." : null,
-      });
 
       // token・refreshToken 両方ないなら「素の未ログイン」と見なして終了
       if (!token && !refreshToken) {
-        console.log(
-          "[AuthContext] token / refreshToken どちらも存在せず → 未ログインとして loading=false にします"
-        );
         if (!cancelled) {
           setUserID(null);
           setLoading(false);
@@ -128,55 +104,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         // token がないが refreshToken がある場合はリフレッシュを試行
         if (!token && refreshToken) {
-          console.log("[AuthContext] token なし。refreshToken でリフレッシュを試みます");
           await attemptRefresh();
-          console.log("[AuthContext] リフレッシュ成功。再度 ensureSession が走る想定です");
           return;
         }
 
         if (!token) {
-          console.log("[AuthContext] token も refreshToken も不正 → 未ログイン扱い");
           clearTokens();
           if (!cancelled) setLoading(false);
           return;
         }
 
         // /api/v1/auth/meエンドポイントでユーザー情報を取得
-        console.log("[AuthContext] /auth/me でユーザー確認を行います");
         const res = await fetch("http://localhost:8080/api/v1/auth/me", {
           method: "GET",
           headers: { Authorization: `Bearer ${token}` },
         });
 
-        console.log("[AuthContext] /auth/me レスポンスステータス:", res.status);
 
         // 401エラーの場合はトークンリフレッシュを試行
         if (res.status === 401 && refreshToken) {
-          console.log("[AuthContext] /auth/me が 401。refreshToken でリフレッシュを試みます");
           await attemptRefresh();
           return;
         }
 
         if (!res.ok) {
-          console.log("[AuthContext] /auth/me がエラー応答:", res.status);
           throw new Error("unauthorized");
         }
 
         const body = await res.json();
-        console.log("[AuthContext] /auth/me レスポンスボディ:", body);
 
         const id = body?.data?.id ?? null;
         if (!cancelled) {
-          console.log("[AuthContext] userID をセット:", id);
           setUserID(id);
         }
       } catch (err) {
-        console.error("[AuthContext] セッション確認エラー:", err);
         clearTokens();
       } finally {
         if (!cancelled) {
           setLoading(false);
-          console.log("[AuthContext] ensureSession 完了: loading=false, userID=", userID);
         }
       }
     };
@@ -184,14 +149,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     ensureSession();
 
     return () => {
-      console.log("[AuthContext] ensureSession cleanup: cancelled=true");
       cancelled = true;
     };
   }, [initialized, token, refreshToken]); // ★ initialized も依存に追加
 
   // ユーザー名・パスワードでログイン
   const login = async (name: string, password: string) => {
-    console.log("[AuthContext] login 開始:", { name });
 
     const res = await fetch("http://localhost:8080/api/v1/auth/login", {
       method: "POST",
@@ -199,18 +162,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       body: JSON.stringify({ name, password }),
     });
 
-    console.log("[AuthContext] /auth/login レスポンスステータス:", res.status);
 
     if (!res.ok) {
-      console.log("[AuthContext] /auth/login 失敗");
       throw new Error("login failed");
     }
 
     const body = await res.json();
-    console.log("[AuthContext] /auth/login レスポンスボディ:", body);
     const data = body?.data;
     if (!data?.access_token || !data?.refresh_token) {
-      console.log("[AuthContext] /auth/login レスポンス不正: data=", data);
       throw new Error("invalid login response");
     }
     persistTokens(data.access_token, data.refresh_token);
@@ -218,17 +177,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   // ログアウト処理
   const logout = () => {
-    console.log("[AuthContext] logout 呼び出し");
     clearTokens();
   };
 
-  console.log("[AuthContext] Provider レンダリング: state =", {
-    token: token ? token.slice(0, 16) + "..." : null,
-    refreshToken: refreshToken ? refreshToken.slice(0, 16) + "..." : null,
-    userID,
-    loading,
-    initialized,
-  });
 
   return (
     <AuthContext.Provider

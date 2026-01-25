@@ -1,17 +1,17 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useTargets } from "../hooks/useTargets";
+import { useActionTypes } from "../hooks/useActionTypes";
 import styles from "../assets/styles/TargetForm.module.scss";
 
-// 観察対象の追加・編集フォーム
-const TargetForm = () => {
+// 行動種別の追加・編集フォーム
+const ActionTypeForm = () => {
   const navigate = useNavigate();
   const { id } = useParams<{ id: string }>();
   const isEditMode = !!id;
 
-  const { loading, error, fetchTargetByID, createTarget, updateTarget } = useTargets();
+  const { loading, error, fetchActionTypeByID, createActionType, updateActionType } = useActionTypes();
 
-  const [name, setName] = useState("");
+  const [actionName, setActionName] = useState("");
   const [description, setDescription] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -19,16 +19,16 @@ const TargetForm = () => {
   // 編集時は既存データを取得
   useEffect(() => {
     if (isEditMode && id) {
-      const load = async () => {
-        const target = await fetchTargetByID(parseInt(id, 10));
-        if (target) {
-          setName(target.name);
-          setDescription(target.description);
+      const loadActionType = async () => {
+        const actionType = await fetchActionTypeByID(parseInt(id, 10));
+        if (actionType) {
+          setActionName(actionType.action_name);
+          setDescription(actionType.description || "");
         } else {
-          setFormError("観察対象が見つかりません");
+          setFormError("行動種別が見つかりません");
         }
       };
-      load();
+      loadActionType();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, isEditMode]);
@@ -37,30 +37,32 @@ const TargetForm = () => {
     e.preventDefault();
     setFormError(null);
 
-    if (!name.trim()) {
-      setFormError("名前は必須です");
+    const trimmedName = actionName.trim();
+    if (!trimmedName) {
+      setFormError("種別名は必須です");
       return;
     }
-    if (name.length > 64) {
-      setFormError("名前は64文字以内で入力してください");
+    if (trimmedName.length > 64) {
+      setFormError("種別名は64文字以内で入力してください");
       return;
     }
 
     setSubmitting(true);
+
     try {
       if (isEditMode && id) {
-        const result = await updateTarget(parseInt(id, 10), name.trim(), description.trim());
+        const result = await updateActionType(parseInt(id, 10), trimmedName, description.trim());
         if (result) {
-          alert("観察対象を更新しました");
-          navigate("/targets");
+          alert("行動種別を更新しました");
+          navigate("/action-types");
         } else {
           setFormError("更新に失敗しました");
         }
       } else {
-        const result = await createTarget(name.trim(), description.trim());
+        const result = await createActionType(trimmedName, description.trim());
         if (result) {
-          alert("観察対象を作成しました");
-          navigate("/targets");
+          alert("行動種別を作成しました");
+          navigate("/action-types");
         } else {
           setFormError("作成に失敗しました");
         }
@@ -74,7 +76,7 @@ const TargetForm = () => {
 
   if (loading && isEditMode) {
     return (
-      <div className={styles.loading}>
+      <div className={styles.container}>
         <p>読み込み中...</p>
       </div>
     );
@@ -82,27 +84,25 @@ const TargetForm = () => {
 
   return (
     <div className={styles.container}>
-      <h1 className={styles.title}>{isEditMode ? "観察対象を編集" : "観察対象を追加"}</h1>
+      <h1 className={styles.title}>{isEditMode ? "行動種別を編集" : "行動種別を追加"}</h1>
 
       {(formError || error) && <div className={styles.errorBox}>エラー: {formError || error}</div>}
 
       <form onSubmit={handleSubmit}>
         <div className={styles.formGroup}>
-          <label className={styles.label} htmlFor="name">
-            名前 <span className={styles.required}>*</span>
+          <label className={styles.label} htmlFor="actionName">
+            種別名 <span className={styles.required}>*</span>
           </label>
           <input
+            id="actionName"
             className={styles.input}
             type="text"
-            id="name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
+            value={actionName}
+            onChange={(e) => setActionName(e.target.value)}
+            placeholder="例）食事、運動、睡眠"
             maxLength={64}
-            required
-            placeholder="例）顧客Aプロジェクト"
             disabled={submitting}
           />
-          <small className={styles.hint}>{name.length}/64 文字</small>
         </div>
 
         <div className={styles.formGroup}>
@@ -110,12 +110,12 @@ const TargetForm = () => {
             説明
           </label>
           <textarea
-            className={styles.textarea}
             id="description"
+            className={styles.textarea}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            placeholder="例）この行動種別の詳細な説明"
             rows={5}
-            placeholder="例）営業部案件、2026年Q1対応など"
             disabled={submitting}
           />
         </div>
@@ -124,7 +124,12 @@ const TargetForm = () => {
           <button className={styles.primaryButton} type="submit" disabled={submitting}>
             {submitting ? "処理中..." : isEditMode ? "更新" : "作成"}
           </button>
-          <button className={styles.secondaryButton} type="button" onClick={() => navigate("/targets")} disabled={submitting}>
+          <button
+            className={styles.secondaryButton}
+            type="button"
+            onClick={() => navigate("/action-types")}
+            disabled={submitting}
+          >
             キャンセル
           </button>
         </div>
@@ -133,4 +138,4 @@ const TargetForm = () => {
   );
 };
 
-export default TargetForm;
+export default ActionTypeForm;

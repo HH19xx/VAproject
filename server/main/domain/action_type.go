@@ -2,10 +2,10 @@ package domain
 
 import "time"
 
-// 観察対象エンティティ
-type Target struct {
+// 行動種別エンティティ
+type ActionType struct {
 	ID          int        `json:"id"`
-	Name        string     `json:"name"`
+	ActionName  string     `json:"action_name"`
 	Description string     `json:"description"`
 	CreatedAt   time.Time  `json:"created_at"`
 	CreateUser  string     `json:"create_user"`

@@ -3,10 +3,13 @@ package usecases
 import (
 	"context"
 	"errors"
+
+	"github.com/lib/pq"
+
 	"server/main/domain"
 )
 
-// 観察対象に関する永続化の抽象インターフェース
+// 観察対象の永続化を抽象化したインターフェース
 type TargetRepository interface {
 	FindAll(ctx context.Context, limit, offset int) ([]*domain.Target, error)
 	FindByID(ctx context.Context, id int) (*domain.Target, error)
@@ -16,22 +19,21 @@ type TargetRepository interface {
 	Count(ctx context.Context) (int, error)
 }
 
-// 観察対象に関するビジネスロジックを提供する
+// 観察対象ユースケース
 type TargetUsecase struct {
 	Repo TargetRepository
 }
 
-// バリデーションエラー
+// バリデーション・ドメインエラー
 var (
-	ErrTargetNameRequired = errors.New("観察対象の名前は必須です")
-	ErrTargetNameTooLong  = errors.New("観察対象の名前は64文字以内で入力してください")
+	ErrTargetNameRequired  = errors.New("観察対象の名前は必須です")
+	ErrTargetNameTooLong   = errors.New("観察対象の名前は64文字以内で入力してください")
+	ErrTargetNameDuplicate = errors.New("観察対象の名前が重複しています")
 )
 
-// ページネーション付きで観察対象の一覧を取得する
-// page: ページ番号（1から開始）、limit: 1ページあたりの件数
-// 戻り値: 観察対象のスライス、総件数、エラー
+// ページネーション付きで観察対象一覧を取得
+// page: 1始まりのページ番号, limit: 1ページあたりの件数
 func (u *TargetUsecase) GetTargets(ctx context.Context, page, limit int) ([]*domain.Target, int, error) {
-	// ページ番号とリミットの妥当性チェック
 	if page < 1 {
 		page = 1
 	}
@@ -39,16 +41,13 @@ func (u *TargetUsecase) GetTargets(ctx context.Context, page, limit int) ([]*dom
 		limit = 20
 	}
 
-	// オフセット計算（ページ1なら0件スキップ、ページ2なら20件スキップ）
 	offset := (page - 1) * limit
 
-	// データベースから観察対象を取得
 	targets, err := u.Repo.FindAll(ctx, limit, offset)
 	if err != nil {
 		return nil, 0, err
 	}
 
-	// 総件数を取得（ページネーション情報用）
 	total, err := u.Repo.Count(ctx)
 	if err != nil {
 		return nil, 0, err
@@ -57,27 +56,20 @@ func (u *TargetUsecase) GetTargets(ctx context.Context, page, limit int) ([]*dom
 	return targets, total, nil
 }
 
-// 指定されたIDの観察対象を取得する
+// ID指定で観察対象を取得
 func (u *TargetUsecase) GetTargetByID(ctx context.Context, id int) (*domain.Target, error) {
 	return u.Repo.FindByID(ctx, id)
 }
 
-// 新しい観察対象を作成する
-// name: 観察対象の名前（必須、1-64文字）
-// description: 観察対象の説明（任意）
-// createUser: 作成者ユーザー名
-// 戻り値: 作成された観察対象、エラー
+// 観察対象を新規登録
 func (u *TargetUsecase) CreateTarget(ctx context.Context, name, description, createUser string) (*domain.Target, error) {
-	// バリデーション: 名前は必須
 	if name == "" {
 		return nil, ErrTargetNameRequired
 	}
-	// バリデーション: 名前は64文字以内
 	if len(name) > 64 {
 		return nil, ErrTargetNameTooLong
 	}
 
-	// Targetエンティティを組み立て
 	target := &domain.Target{
 		Name:        name,
 		Description: description,
@@ -85,53 +77,46 @@ func (u *TargetUsecase) CreateTarget(ctx context.Context, name, description, cre
 		UpdateUser:  createUser,
 	}
 
-	// データベースに保存し、生成されたIDを取得
 	id, err := u.Repo.Create(ctx, target)
 	if err != nil {
+		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
+			return nil, ErrTargetNameDuplicate
+		}
 		return nil, err
 	}
 
-	// 作成された観察対象を取得して返す
 	return u.Repo.FindByID(ctx, id)
 }
 
-// 更新された観察対象を取得して返す
-// id: 更新対象のID
-// name: 新しい名前（必須、1-64文字）
-// description: 新しい説明（任意）
-// updateUser: 更新者ユーザー名
-// 戻り値: 更新された観察対象、エラー
+// 観察対象を更新
 func (u *TargetUsecase) UpdateTarget(ctx context.Context, id int, name, description, updateUser string) (*domain.Target, error) {
-	// バリデーション: 名前は必須
 	if name == "" {
 		return nil, ErrTargetNameRequired
 	}
-	// バリデーション: 名前は64文字以内
 	if len(name) > 64 {
 		return nil, ErrTargetNameTooLong
 	}
 
-	// 更新対象が存在するか確認
 	target, err := u.Repo.FindByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	// 更新内容を設定
 	target.Name = name
 	target.Description = description
 	target.UpdateUser = updateUser
 
-	// データベースを更新
 	if err := u.Repo.Update(ctx, target); err != nil {
+		if pqErr, ok := err.(*pq.Error); ok && pqErr.Code == "23505" {
+			return nil, ErrTargetNameDuplicate
+		}
 		return nil, err
 	}
 
-	// 更新後の観察対象を取得して返す
 	return u.Repo.FindByID(ctx, id)
 }
 
-// 指定されたIDの観察対象を削除する
+// 観察対象を論理削除
 func (u *TargetUsecase) DeleteTarget(ctx context.Context, id int) error {
 	return u.Repo.Delete(ctx, id)
 }

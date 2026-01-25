@@ -17,6 +17,8 @@ func RunMigrations(db *sql.DB) error {
 		"0004_create_user_auth_providers.up.sql",
 		"0001_create_targets.up.sql",
 		"0001_create_action_types.sql",
+		"0002_create_target_action_types.up.sql",
+		"0001_create_action_logs.up.sql",
 		"0001_create_custom_actions.up.sql",
 	}
 

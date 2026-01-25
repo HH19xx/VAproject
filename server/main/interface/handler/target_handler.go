@@ -3,12 +3,13 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
-	"server/main/app/usecases"
 	"strconv"
 	"strings"
+
+	"server/main/usecases"
 )
 
-// 観察対象に関するHTTPハンドラを提供
+// 観察対象エンドポイント群のハンドラー
 type TargetHandler struct {
 	Usecase *usecases.TargetUsecase
 }
@@ -16,13 +17,11 @@ type TargetHandler struct {
 // 観察対象の一覧を取得（GET /api/v1/targets）
 func (h *TargetHandler) ListTargetsHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// GETメソッドのみ許可
 		if r.Method != http.MethodGet {
-			JSONError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "このエンドポイントはGETメソッドのみ対応しています", nil)
+			JSONError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "GETメソッドのみ許可されています", nil)
 			return
 		}
 
-		// クエリパラメータからページとリミットを取得（デフォルト: page=1, limit=20）
 		pageStr := r.URL.Query().Get("page")
 		limitStr := r.URL.Query().Get("limit")
 
@@ -36,14 +35,12 @@ func (h *TargetHandler) ListTargetsHandler() http.HandlerFunc {
 			limit = 20
 		}
 
-		// ユースケースから観察対象一覧を取得
 		targets, total, err := h.Usecase.GetTargets(r.Context(), page, limit)
 		if err != nil {
 			JSONError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "観察対象の取得に失敗しました", err.Error())
 			return
 		}
 
-		// レスポンスボディを構築
 		response := map[string]interface{}{
 			"targets": targets,
 			"pagination": map[string]interface{}{
@@ -60,40 +57,39 @@ func (h *TargetHandler) ListTargetsHandler() http.HandlerFunc {
 // 観察対象を新規作成（POST /api/v1/targets）
 func (h *TargetHandler) CreateTargetHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// POSTメソッドのみ許可
 		if r.Method != http.MethodPost {
-			JSONError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "このエンドポイントはPOSTメソッドのみ対応しています", nil)
+			JSONError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "POSTメソッドのみ許可されています", nil)
 			return
 		}
 
-		// リクエストボディをパース
 		var req struct {
 			Name        string `json:"name"`
 			Description string `json:"description"`
 		}
 
 		if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-			JSONError(w, http.StatusBadRequest, "INVALID_JSON", "JSONの形式が正しくありません", err.Error())
+			JSONError(w, http.StatusBadRequest, "INVALID_JSON", "JSONの解析に失敗しました", err.Error())
 			return
 		}
 
-		// JWTミドルウェアから取得したユーザー名を使用
 		username, ok := r.Context().Value("username").(string)
 		if !ok || username == "" {
-			username = "system" // フォールバック
+			username = "system"
 		}
 
-		// ユースケースで観察対象を作成
 		target, err := h.Usecase.CreateTarget(r.Context(), req.Name, req.Description, username)
 		if err != nil {
-			// バリデーションエラー
-			if err == usecases.ErrTargetNameRequired || err == usecases.ErrTargetNameTooLong {
+			switch err {
+			case usecases.ErrTargetNameRequired, usecases.ErrTargetNameTooLong:
 				JSONError(w, http.StatusBadRequest, "VALIDATION_ERROR", err.Error(), nil)
 				return
+			case usecases.ErrTargetNameDuplicate:
+				JSONError(w, http.StatusConflict, "CONFLICT", err.Error(), nil)
+				return
+			default:
+				JSONError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "観察対象の作成に失敗しました", err.Error())
+				return
 			}
-			// その他のエラー（DB制約違反など）
-			JSONError(w, http.StatusInternalServerError, "INTERNAL_ERROR", "観察対象の作成に失敗しました", err.Error())
-			return
 		}
 
 		JSONSuccess(w, http.StatusCreated, target, "観察対象を作成しました")
@@ -103,17 +99,15 @@ func (h *TargetHandler) CreateTargetHandler() http.HandlerFunc {
 // 個別の観察対象に対する操作を処理（GET/PUT/DELETE /api/v1/targets/{id}）
 func (h *TargetHandler) TargetDetailHandler() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// URLパスからIDを抽出
 		path := strings.TrimPrefix(r.URL.Path, "/api/v1/targets/")
 		idStr := strings.Split(path, "/")[0]
 
 		id, err := strconv.Atoi(idStr)
 		if err != nil || id < 1 {
-			JSONError(w, http.StatusBadRequest, "INVALID_ID", "IDの形式が正しくありません", nil)
+			JSONError(w, http.StatusBadRequest, "INVALID_ID", "IDが不正です", nil)
 			return
 		}
 
-		// HTTPメソッドに応じて処理を分岐
 		switch r.Method {
 		case http.MethodGet:
 			h.getTargetByID(w, r, id)
@@ -122,12 +116,12 @@ func (h *TargetHandler) TargetDetailHandler() http.HandlerFunc {
 		case http.MethodDelete:
 			h.deleteTarget(w, r, id)
 		default:
-			JSONError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "このエンドポイントはGET、PUT、DELETEメソッドのみ対応しています", nil)
+			JSONError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "GET/PUT/DELETEメソッドのみ許可されています", nil)
 		}
 	}
 }
 
-// 指定IDの観察対象を取得する内部メソッド
+// ID指定で観察対象を取得
 func (h *TargetHandler) getTargetByID(w http.ResponseWriter, r *http.Request, id int) {
 	target, err := h.Usecase.GetTargetByID(r.Context(), id)
 	if err != nil {
@@ -138,49 +132,46 @@ func (h *TargetHandler) getTargetByID(w http.ResponseWriter, r *http.Request, id
 	JSONSuccess(w, http.StatusOK, target, "観察対象を取得しました")
 }
 
-// 指定IDの観察対象を更新する内部メソッド
+// 観察対象を更新
 func (h *TargetHandler) updateTarget(w http.ResponseWriter, r *http.Request, id int) {
-	// リクエストボディをパース
 	var req struct {
 		Name        string `json:"name"`
 		Description string `json:"description"`
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		JSONError(w, http.StatusBadRequest, "INVALID_JSON", "JSONの形式が正しくありません", err.Error())
+		JSONError(w, http.StatusBadRequest, "INVALID_JSON", "JSONの解析に失敗しました", err.Error())
 		return
 	}
 
-	// JWTミドルウェアから取得したユーザー名を使用
 	username, ok := r.Context().Value("username").(string)
 	if !ok || username == "" {
 		username = "system"
 	}
 
-	// ユースケースで観察対象を更新
 	target, err := h.Usecase.UpdateTarget(r.Context(), id, req.Name, req.Description, username)
 	if err != nil {
-		// バリデーションエラー
-		if err == usecases.ErrTargetNameRequired || err == usecases.ErrTargetNameTooLong {
+		switch err {
+		case usecases.ErrTargetNameRequired, usecases.ErrTargetNameTooLong:
 			JSONError(w, http.StatusBadRequest, "VALIDATION_ERROR", err.Error(), nil)
 			return
+		case usecases.ErrTargetNameDuplicate:
+			JSONError(w, http.StatusConflict, "CONFLICT", err.Error(), nil)
+			return
+		default:
+			JSONError(w, http.StatusNotFound, "NOT_FOUND", "指定された観察対象が見つかりません", nil)
+			return
 		}
-		// 対象が見つからない
-		JSONError(w, http.StatusNotFound, "NOT_FOUND", "指定された観察対象が見つかりません", nil)
-		return
 	}
 
 	JSONSuccess(w, http.StatusOK, target, "観察対象を更新しました")
 }
 
-// 指定IDの観察対象を論理削除する内部メソッド
+// 観察対象を論理削除
 func (h *TargetHandler) deleteTarget(w http.ResponseWriter, r *http.Request, id int) {
-	// ユースケースで観察対象を論理削除
-	err := h.Usecase.DeleteTarget(r.Context(), id)
-	if err != nil {
+	if err := h.Usecase.DeleteTarget(r.Context(), id); err != nil {
 		JSONError(w, http.StatusNotFound, "NOT_FOUND", "指定された観察対象が見つかりません", nil)
 		return
 	}
-
 	JSONSuccess(w, http.StatusOK, nil, "観察対象を削除しました")
 }
