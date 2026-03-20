@@ -3,8 +3,8 @@ package db
 import (
 	"database/sql"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 )
 
@@ -18,8 +18,12 @@ func RunMigrations(db *sql.DB) error {
 		"0001_create_targets.up.sql",
 		"0001_create_action_types.sql",
 		"0002_create_target_action_types.up.sql",
+		"0005_add_and_search_schema.up.sql",
+		"0006_create_prototypes.up.sql",
 		"0001_create_action_logs.up.sql",
 		"0001_create_custom_actions.up.sql",
+		"0009_create_analysis_snapshots.up.sql",
+		"0010_create_world_signals.up.sql",
 	}
 
 	// migrationsディレクトリの基底パスを指定
@@ -30,7 +34,7 @@ func RunMigrations(db *sql.DB) error {
 		fullPath := filepath.Join(basePath, file)
 
 		// マイグレーションファイルを読み込む
-		sqlBytes, err := ioutil.ReadFile(fullPath)
+		sqlBytes, err := os.ReadFile(fullPath)
 		if err != nil {
 			return fmt.Errorf("マイグレーションファイルの読み込みに失敗しました (%s): %w", fullPath, err)
 		}
@@ -55,7 +59,7 @@ func RunTestDataMigrations(db *sql.DB) error {
 	testDataPath := "main/infra/db/migrations/test_data"
 
 	// test_dataディレクトリ内のファイル一覧を取得
-	files, err := ioutil.ReadDir(testDataPath)
+	files, err := os.ReadDir(testDataPath)
 	if err != nil {
 		// ディレクトリが存在しない場合は本番環境とみなし、ログを出力して正常終了
 		log.Println("test_dataディレクトリが存在しないため、テストデータのマイグレーションをスキップします（本番環境）")
@@ -85,7 +89,7 @@ func RunTestDataMigrations(db *sql.DB) error {
 		fullPath := filepath.Join(testDataPath, file.Name())
 
 		// SQLファイルを読み込む
-		sqlBytes, err := ioutil.ReadFile(fullPath)
+		sqlBytes, err := os.ReadFile(fullPath)
 		if err != nil {
 			return fmt.Errorf("テストデータファイルの読み込みに失敗しました (%s): %w", fullPath, err)
 		}

@@ -16,10 +16,10 @@ import (
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
-		// 開発環境では localhost からのリクエストを許可
+		// 開発環境ではlocalhostからのリクエストを許可
 		if origin == "http://localhost:5173" || origin == "http://localhost:3000" {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
-			w.Header().Set("Access-Control-Allow-Credentials", "true") // Cookie送信を許可
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
 		}
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
@@ -33,7 +33,7 @@ func corsMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-// JWT認証ミドルウェア。除外パスを設定しJWT認証を適用
+// JWT認証ミドルウェア。除外パスを設定しJWT認証を適用。
 func jwtProtectedMux(mux *http.ServeMux) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// 除外パスの設定: 未認証でもアクセス可能なエンドポイントを列挙
@@ -92,18 +92,48 @@ func main() {
 	targetUsecase := &usecases.TargetUsecase{Repo: targetRepo}
 	targetHandler := &handler.TargetHandler{Usecase: targetUsecase}
 
-	actionLogRepo := repository.NewActionLogRepository(conn)
-	actionLogUsecase := &usecases.ActionLogUsecase{Repo: actionLogRepo}
-	actionLogHandler := &handler.ActionLogHandler{Usecase: actionLogUsecase}
+	// 対象と行動種別の紐づけユースケースおよびハンドラを構築
+	targetActionTypeRepo := repository.NewTargetActionTypeRepository(conn)
+	targetActionTypeUsecase := &usecases.TargetActionTypeUsecase{Repo: targetActionTypeRepo}
+	targetActionTypeHandler := &handler.TargetActionTypeHandler{Usecase: targetActionTypeUsecase}
 
 	actionTypeRepo := repository.NewActionTypeRepository(conn)
 	actionTypeUsecase := &usecases.ActionTypeUsecase{Repo: actionTypeRepo}
 	actionTypeHandler := &handler.ActionTypeHandler{Usecase: actionTypeUsecase}
 
-	// 対象と行動種別の紐づけユースケースおよびハンドラを構築
-	targetActionTypeRepo := repository.NewTargetActionTypeRepository(conn)
-	targetActionTypeUsecase := &usecases.TargetActionTypeUsecase{Repo: targetActionTypeRepo}
-	targetActionTypeHandler := &handler.TargetActionTypeHandler{Usecase: targetActionTypeUsecase}
+	tagRepo := repository.NewTagRepository(conn)
+	tagUsecase := &usecases.TagUsecase{Repo: tagRepo}
+	tagHandler := &handler.TagHandler{Usecase: tagUsecase}
+	targetUsecase.TagRepo = tagRepo
+
+	prototypeRepo := repository.NewPrototypeRepository(conn)
+	prototypeUsecase := &usecases.PrototypeUsecase{
+		Repo:    prototypeRepo,
+		TagRepo: tagRepo,
+	}
+	prototypeHandler := &handler.PrototypeHandler{Usecase: prototypeUsecase}
+
+	actionLogRepo := repository.NewActionLogRepository(conn)
+	actionLogUsecase := &usecases.ActionLogUsecase{
+		Repo:          actionLogRepo,
+		TagRepo:       tagRepo,
+		PrototypeRepo: prototypeRepo,
+	}
+	actionLogHandler := &handler.ActionLogHandler{Usecase: actionLogUsecase}
+
+	analysisSnapshotRepo := repository.NewAnalysisSnapshotRepository(conn)
+	analysisSnapshotUsecase := &usecases.AnalysisSnapshotUsecase{Repo: analysisSnapshotRepo}
+	analysisSnapshotHandler := &handler.AnalysisSnapshotHandler{Usecase: analysisSnapshotUsecase}
+
+	worldSignalRepo := repository.NewWorldSignalRepository(conn)
+	worldSignalUsecase := &usecases.WorldSignalUsecase{Repo: worldSignalRepo}
+	worldSignalHandler := &handler.WorldSignalHandler{Usecase: worldSignalUsecase}
+
+	analysisContextUsecase := &usecases.AnalysisContextUsecase{
+		ActionLogUsecase:   actionLogUsecase,
+		WorldSignalUsecase: worldSignalUsecase,
+	}
+	analysisContextHandler := &handler.AnalysisContextHandler{Usecase: analysisContextUsecase}
 
 	// HTTPルーティング設定
 	mux := http.NewServeMux()
@@ -151,6 +181,15 @@ func main() {
 	})
 	mux.HandleFunc("/api/v1/targets/", func(w http.ResponseWriter, r *http.Request) {
 		// 対象と行動種別の紐づけ操作を優先的に処理
+		if strings.Contains(r.URL.Path, "/action_logs") {
+			if r.Method == http.MethodGet {
+				targetHandler.ListActionLogsByTargetHandler()(w, r)
+			} else {
+				handler.JSONError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "GETメソッドのみ許可されています", nil)
+			}
+			return
+		}
+
 		if strings.Contains(r.URL.Path, "/action-types") {
 			if r.Method == http.MethodGet {
 				targetActionTypeHandler.ListByTargetHandler()(w, r)
@@ -179,6 +218,22 @@ func main() {
 	})
 	mux.HandleFunc("/api/v1/action_logs/", actionLogHandler.DetailHandler())
 
+	// 現状分析スナップショットAPI
+	mux.HandleFunc("/api/v1/analysis_snapshots", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			analysisSnapshotHandler.ListHandler()(w, r)
+		} else if r.Method == http.MethodPost {
+			analysisSnapshotHandler.CreateHandler()(w, r)
+		} else if r.Method == http.MethodDelete {
+			analysisSnapshotHandler.DeleteAllHandler()(w, r)
+		} else {
+			handler.JSONError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "GET/POST/DELETE only", nil)
+		}
+	})
+	mux.HandleFunc("/api/v1/world_signals", worldSignalHandler.ListHandler())
+	mux.HandleFunc("/api/v1/world_signals/fetch", worldSignalHandler.FetchOpenMeteoHandler())
+	mux.HandleFunc("/api/v1/analysis/context", analysisContextHandler.BuildHandler())
+
 	// 行動種別のエンドポイント（認証必須）
 	mux.HandleFunc("/api/v1/action_types", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
@@ -190,6 +245,30 @@ func main() {
 		}
 	})
 	mux.HandleFunc("/api/v1/action_types/", actionTypeHandler.DetailHandler())
+
+	// タグのエンドポイント（認証必須）
+	mux.HandleFunc("/api/v1/tags", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			tagHandler.ListHandler()(w, r)
+		} else if r.Method == http.MethodPost {
+			tagHandler.CreateHandler()(w, r)
+		} else {
+			handler.JSONError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "このエンドポイントはGETまたはPOSTメソッドのみ対応しています", nil)
+		}
+	})
+	mux.HandleFunc("/api/v1/tags/", tagHandler.DetailHandler())
+
+	// プロトタイプのエンドポイント
+	mux.HandleFunc("/api/v1/prototypes", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			prototypeHandler.ListHandler()(w, r)
+		} else if r.Method == http.MethodPost {
+			prototypeHandler.CreateHandler()(w, r)
+		} else {
+			handler.JSONError(w, http.StatusMethodNotAllowed, "METHOD_NOT_ALLOWED", "GETメソッドとPOSTメソッドのみ許可されています", nil)
+		}
+	})
+	mux.HandleFunc("/api/v1/prototypes/", prototypeHandler.DetailHandler())
 
 	// JWT認証とCORSミドルウェアを順に適用
 	handlerWithAuth := jwtProtectedMux(mux)

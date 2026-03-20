@@ -1,11 +1,17 @@
-import { useState, useContext } from "react";
+﻿import { useContext, useState } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 
-// 観察対象の型定義
 export interface Target {
   id: number;
+  user_id: number;
   name: string;
   description: string;
+  match_mode: "AND";
+  query_text: string;
+  tag_ids: number[];
+  any_tag_ids: number[];
+  any_tag_groups: number[][];
+  exclude_tag_ids: number[];
   created_at: string;
   create_user: string;
   updated_at: string;
@@ -13,16 +19,37 @@ export interface Target {
   deleted_at?: string;
 }
 
-// ページネーション情報の型定義
+export interface ActionLog {
+  id: number;
+  user_id: number;
+  occurred_at: string;
+  notes: string;
+  tag_ids: number[];
+  created_at: string;
+  create_user: string;
+  updated_at: string;
+  update_user: string;
+  deleted_at?: string;
+}
+
 interface Pagination {
   page: number;
   limit: number;
   total: number;
 }
 
-// APIレスポンスの型定義
+interface TargetActionLogsResponse {
+  logs: ActionLog[];
+  pagination: Pagination;
+}
 
-// useTargetsフック: 観察対象のCRUD操作を提供
+interface TargetQueryPayload {
+  queryText?: string;
+  anyTagIDs?: number[];
+  anyTagGroups?: number[][];
+  excludeTagIDs?: number[];
+}
+
 export const useTargets = () => {
   const authContext = useContext(AuthContext);
   const [targets, setTargets] = useState<Target[]>([]);
@@ -31,13 +58,12 @@ export const useTargets = () => {
   const [error, setError] = useState<string | null>(null);
 
   if (!authContext) {
-    throw new Error("useTargets must be used within AuthProvider");
+    throw new Error("useTargets は AuthProvider 内で使用してください");
   }
 
   const { token } = authContext;
-  const API_BASE_URL = "http://localhost:8080/api/v1";
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1";
 
-  // 認証ヘッダーを含むfetchリクエストを実行するヘルパー関数
   const authFetch = async (url: string, options: RequestInit = {}) => {
     const headers: HeadersInit = {
       "Content-Type": "application/json",
@@ -46,136 +72,152 @@ export const useTargets = () => {
     };
 
     const response = await fetch(url, { ...options, headers });
-
     if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error?.message || "APIエラーが発生しました");
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || "APIリクエストに失敗しました");
     }
-
     return response.json();
   };
 
-  // 観察対象の一覧を取得（ページネーション対応）
-  const fetchTargets = async (page: number = 1, limit: number = 20) => {
+  const fetchTargets = async (page = 1, limit = 20) => {
     setLoading(true);
     setError(null);
-
     try {
       const data = await authFetch(`${API_BASE_URL}/targets?page=${page}&limit=${limit}`);
-
-      if (data.success) {
-        setTargets(data.data.targets || []);
-        setPagination(data.data.pagination);
-      } else {
+      if (!data.success) {
         throw new Error(data.message || "観察対象の取得に失敗しました");
       }
+      setTargets(data.data.targets || []);
+      setPagination(data.data.pagination);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "観察対象の取得に失敗しました";
-      setError(errorMessage);
+      setError(err instanceof Error ? err.message : "観察対象の取得に失敗しました");
     } finally {
       setLoading(false);
     }
   };
 
-  // 指定されたIDの観察対象を取得
   const fetchTargetByID = async (id: number): Promise<Target | null> => {
     setLoading(true);
     setError(null);
-
     try {
       const data = await authFetch(`${API_BASE_URL}/targets/${id}`);
-
-      if (data.success) {
-        return data.data as Target;
-      } else {
+      if (!data.success) {
         throw new Error(data.message || "観察対象の取得に失敗しました");
       }
+      return data.data as Target;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "観察対象の取得に失敗しました";
-      setError(errorMessage);
+      setError(err instanceof Error ? err.message : "観察対象の取得に失敗しました");
       return null;
     } finally {
       setLoading(false);
     }
   };
 
-  // 新しい観察対象を作成
-  const createTarget = async (name: string, description: string): Promise<Target | null> => {
+  const createTarget = async (
+    name: string,
+    description: string,
+    tagIDs: number[],
+    query: TargetQueryPayload = {}
+  ): Promise<Target | null> => {
     setLoading(true);
     setError(null);
-
     try {
       const data = await authFetch(`${API_BASE_URL}/targets`, {
         method: "POST",
-        body: JSON.stringify({ name, description }),
+        body: JSON.stringify({
+          name,
+          description,
+          match_mode: "AND",
+          query_text: query.queryText || "",
+          tag_ids: tagIDs,
+          any_tag_ids: query.anyTagIDs || [],
+          any_tag_groups: query.anyTagGroups || [],
+          exclude_tag_ids: query.excludeTagIDs || [],
+        }),
       });
-
-      if (data.success) {
-        const newTarget = data.data as Target;
-        // 一覧の先頭に新しい観察対象を追加
-        setTargets((prev) => [newTarget, ...prev]);
-        return newTarget;
-      } else {
+      if (!data.success) {
         throw new Error(data.message || "観察対象の作成に失敗しました");
       }
+      const created = data.data as Target;
+      setTargets((prev) => [created, ...prev]);
+      return created;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "観察対象の作成に失敗しました";
-      setError(errorMessage);
+      setError(err instanceof Error ? err.message : "観察対象の作成に失敗しました");
       return null;
     } finally {
       setLoading(false);
     }
   };
 
-  // 既存の観察対象を更新
-  const updateTarget = async (id: number, name: string, description: string): Promise<Target | null> => {
+  const updateTarget = async (
+    id: number,
+    name: string,
+    description: string,
+    tagIDs: number[],
+    query: TargetQueryPayload = {}
+  ): Promise<Target | null> => {
     setLoading(true);
     setError(null);
-
     try {
       const data = await authFetch(`${API_BASE_URL}/targets/${id}`, {
         method: "PUT",
-        body: JSON.stringify({ name, description }),
+        body: JSON.stringify({
+          name,
+          description,
+          match_mode: "AND",
+          query_text: query.queryText || "",
+          tag_ids: tagIDs,
+          any_tag_ids: query.anyTagIDs || [],
+          any_tag_groups: query.anyTagGroups || [],
+          exclude_tag_ids: query.excludeTagIDs || [],
+        }),
       });
-
-      if (data.success) {
-        const updatedTarget = data.data as Target;
-        // 一覧内の該当する観察対象を更新
-        setTargets((prev) => prev.map((t) => (t.id === id ? updatedTarget : t)));
-        return updatedTarget;
-      } else {
+      if (!data.success) {
         throw new Error(data.message || "観察対象の更新に失敗しました");
       }
+      const updated = data.data as Target;
+      setTargets((prev) => prev.map((t) => (t.id === id ? updated : t)));
+      return updated;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "観察対象の更新に失敗しました";
-      setError(errorMessage);
+      setError(err instanceof Error ? err.message : "観察対象の更新に失敗しました");
       return null;
     } finally {
       setLoading(false);
     }
   };
 
-  // 観察対象を削除（論理削除）
   const deleteTarget = async (id: number): Promise<boolean> => {
     setLoading(true);
     setError(null);
-
     try {
       const data = await authFetch(`${API_BASE_URL}/targets/${id}`, {
         method: "DELETE",
       });
-
-      if (data.success) {
-        // 一覧から削除された観察対象を除外
-        setTargets((prev) => prev.filter((t) => t.id !== id));
-        return true;
-      } else {
+      if (!data.success) {
         throw new Error(data.message || "観察対象の削除に失敗しました");
       }
+      setTargets((prev) => prev.filter((t) => t.id !== id));
+      return true;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : "観察対象の削除に失敗しました";
-      setError(errorMessage);
+      setError(err instanceof Error ? err.message : "観察対象の削除に失敗しました");
       return false;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchActionLogsByTarget = async (targetID: number, page = 1, limit = 20): Promise<TargetActionLogsResponse | null> => {
+    setLoading(true);
+    setError(null);
+    try {
+      const data = await authFetch(`${API_BASE_URL}/targets/${targetID}/action_logs?page=${page}&limit=${limit}`);
+      if (!data.success) {
+        throw new Error(data.message || "観察対象による行動記録の取得に失敗しました");
+      }
+      return data.data as TargetActionLogsResponse;
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "観察対象による行動記録の取得に失敗しました");
+      return null;
     } finally {
       setLoading(false);
     }
@@ -191,5 +233,6 @@ export const useTargets = () => {
     createTarget,
     updateTarget,
     deleteTarget,
+    fetchActionLogsByTarget,
   };
 };

@@ -1,5 +1,5 @@
-@import "./_variables.scss";
-@import "./_common.scss";
+@use "./_variables" as *;
+@use "./_common" as *;
 
 .container {
   padding: 20px;
@@ -39,7 +39,8 @@
 }
 
 .input,
-.textarea {
+.textarea,
+.select {
   width: 100%;
   padding: 10px;
   font-size: 14px;
@@ -57,6 +58,88 @@
   color: $text-muted;
   font-size: 12px;
   margin-top: 4px;
+}
+
+.tagSelector {
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  padding: 10px;
+  background-color: #fff;
+}
+
+.tagInputArea {
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  background-color: #fff;
+  padding: 10px;
+}
+
+.tagChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.tagChip {
+  border: none;
+  border-radius: 999px;
+  background-color: #e9ecef;
+  color: $text-primary;
+  padding: 4px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.suggestionList {
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.suggestionItem {
+  border: 1px solid #ced4da;
+  border-radius: 999px;
+  background-color: #fff;
+  color: $text-primary;
+  padding: 4px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.suggestionItemActive {
+  background-color: $primary;
+  color: #fff;
+  border-color: $primary;
+}
+
+.tagGroup {
+  margin-bottom: 12px;
+}
+
+.tagGroup:last-child {
+  margin-bottom: 0;
+}
+
+.tagGroupTitle {
+  font-weight: 700;
+  margin-bottom: 6px;
+  color: $text-primary;
+}
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+}
+
+.tagItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+  color: $text-primary;
 }
 
 .actions {

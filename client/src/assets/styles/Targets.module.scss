@@ -1,5 +1,6 @@
-@import "./_variables.scss";
-@import "./_common.scss";
+@use "sass:color";
+@use "./_variables" as *;
+@use "./_common" as *;
 
 .container {
   padding: 20px;
@@ -33,7 +34,7 @@
   transition: background-color 0.2s ease;
 
   &:hover {
-    background-color: darken($primary, 6%);
+    background-color: color.adjust($primary, $lightness: -6%);
   }
 }
 
@@ -136,4 +137,40 @@
 .footer {
   margin-top: 20px;
   text-align: center;
+}
+
+.logPanel {
+  margin-top: 20px;
+  padding: 16px;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  background-color: #f8f9fa;
+}
+
+.logPanelTitle {
+  margin: 0 0 10px;
+  font-size: 18px;
+}
+
+.logList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.logItem {
+  padding: 10px 0;
+  border-bottom: 1px solid #e4e7ea;
+}
+
+.logTags {
+  color: #495057;
+  font-size: 13px;
+  margin-top: 2px;
+}
+
+.logNote {
+  color: #212529;
+  font-size: 14px;
+  margin-top: 4px;
 }
