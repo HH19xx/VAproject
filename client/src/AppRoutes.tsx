@@ -5,10 +5,10 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
-import Targets from "./pages/Targets";
-import TargetForm from "./pages/TargetForm";
-import Actions from "./pages/Actions";
-import ActionForm from "./pages/ActionForm";
+import ExternalDataSources from "./pages/statistics/ExternalDataSources";
+import StatisticsAnalysis from "./pages/statistics/StatisticsAnalysis";
+import Actions from "./pages/constructions/Actions";
+import ActionForm from "./pages/records/ActionForm";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function AppRoutes() {
@@ -66,31 +66,7 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/targets"
-        element={
-          <ProtectedRoute>
-            <Targets />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/targets/new"
-        element={
-          <ProtectedRoute>
-            <TargetForm />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/targets/:id/edit"
-        element={
-          <ProtectedRoute>
-            <TargetForm />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/actions"
+        path="/constructions/actions"
         element={
           <ProtectedRoute>
             <Actions />
@@ -98,18 +74,39 @@ function AppRoutes() {
         }
       />
       <Route
-        path="/actions/new"
+        path="/records/actions-form"
         element={
           <ProtectedRoute>
             <ActionForm />
           </ProtectedRoute>
         }
       />
+      {/* <Route
+        path="/records/actions-form/constructions/actions"
+        element={<Navigate to="/constructions/actions" replace />}
+      /> */}
       <Route
-        path="/actions/:id/edit"
+        path="/constructions/actions/:id/edit"
         element={
           <ProtectedRoute>
             <ActionForm />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/statistics"
+        element={
+          <ProtectedRoute>
+            <StatisticsAnalysis />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/statistics/external-data-sources"
+        element={
+          <ProtectedRoute>
+            <ExternalDataSources />
           </ProtectedRoute>
         }
       />

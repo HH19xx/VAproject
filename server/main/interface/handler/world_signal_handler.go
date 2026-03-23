@@ -16,6 +16,7 @@ type WorldSignalHandler struct {
 }
 
 type fetchOpenMeteoRequest struct {
+	Source       string  `json:"source"`
 	LocationKey  string  `json:"location_key"`
 	Latitude     float64 `json:"latitude"`
 	Longitude    float64 `json:"longitude"`
@@ -45,11 +46,12 @@ func (h *WorldSignalHandler) ListHandler() http.HandlerFunc {
 			limit = 200
 		}
 		source := strings.TrimSpace(r.URL.Query().Get("source"))
+		signalType := strings.TrimSpace(r.URL.Query().Get("signal_type"))
 		if source == "" {
 			source = "open_meteo"
 		}
 
-		signals, err := h.Usecase.ListByRange(r.Context(), source, locationKey, from, to, limit)
+		signals, err := h.Usecase.ListByRange(r.Context(), source, locationKey, signalType, from, to, limit)
 		if err != nil {
 			switch {
 			case errors.Is(err, usecases.ErrWorldSignalWindowInvalid):
@@ -95,8 +97,13 @@ func (h *WorldSignalHandler) FetchOpenMeteoHandler() http.HandlerFunc {
 		}
 
 		username, _ := r.Context().Value("username").(string)
-		result, err := h.Usecase.FetchAndStoreOpenMeteo(
+		source := strings.TrimSpace(req.Source)
+		if source == "" {
+			source = "open_meteo"
+		}
+		result, err := h.Usecase.FetchAndStore(
 			r.Context(),
+			source,
 			req.LocationKey,
 			req.Latitude,
 			req.Longitude,
@@ -107,6 +114,7 @@ func (h *WorldSignalHandler) FetchOpenMeteoHandler() http.HandlerFunc {
 		if err != nil {
 			switch {
 			case errors.Is(err, usecases.ErrWorldSignalLocationRequired),
+				errors.Is(err, usecases.ErrWorldSignalSourceUnsupported),
 				errors.Is(err, usecases.ErrWorldSignalLatitudeInvalid),
 				errors.Is(err, usecases.ErrWorldSignalLongitudeInvalid),
 				errors.Is(err, usecases.ErrWorldSignalDaysInvalid):

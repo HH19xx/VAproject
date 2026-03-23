@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+﻿import { useContext, useState } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 
 export interface Prototype {
@@ -25,22 +25,9 @@ export const usePrototypes = () => {
     throw new Error("usePrototypes must be used within AuthProvider");
   }
 
-  const { token } = authContext;
+  const { authFetch } = authContext;
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1";
 
-  const authFetch = async (url: string, options: RequestInit = {}) => {
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...(options.headers as HeadersInit),
-    };
-    const response = await fetch(url, { ...options, headers });
-    if (!response.ok) {
-      const errBody = await response.json().catch(() => ({}));
-      throw new Error(errBody?.error?.message || "APIリクエストに失敗しました");
-    }
-    return response.json();
-  };
 
   const fetchPrototypes = async () => {
     setLoading(true);
@@ -65,3 +52,4 @@ export const usePrototypes = () => {
     fetchPrototypes,
   };
 };
+

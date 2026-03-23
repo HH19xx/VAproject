@@ -26,6 +26,11 @@ func (h *AnalysisContextHandler) BuildHandler() http.HandlerFunc {
 		}
 
 		locationKey := strings.TrimSpace(r.URL.Query().Get("location_key"))
+		source := strings.TrimSpace(r.URL.Query().Get("source"))
+		signalType := strings.TrimSpace(r.URL.Query().Get("signal_type"))
+		if source == "" {
+			source = "open_meteo"
+		}
 		if locationKey == "" {
 			JSONError(w, http.StatusBadRequest, "VALIDATION_ERROR", "location_key is required", nil)
 			return
@@ -40,7 +45,7 @@ func (h *AnalysisContextHandler) BuildHandler() http.HandlerFunc {
 			limit = 200
 		}
 
-		result, err := h.Usecase.Build(r.Context(), userID, locationKey, from, to, limit)
+		result, err := h.Usecase.Build(r.Context(), userID, source, locationKey, signalType, from, to, limit)
 		if err != nil {
 			switch {
 			case errors.Is(err, usecases.ErrWorldSignalWindowInvalid),

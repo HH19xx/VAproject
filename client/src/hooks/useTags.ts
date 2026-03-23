@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+﻿import { useContext, useState } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 
 export interface Tag {
@@ -19,22 +19,9 @@ export const useTags = () => {
     throw new Error("useTags must be used within AuthProvider");
   }
 
-  const { token } = authContext;
+  const { authFetch } = authContext;
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1";
 
-  const authFetch = async (url: string, options: RequestInit = {}) => {
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...(options.headers as HeadersInit),
-    };
-    const response = await fetch(url, { ...options, headers });
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error?.message || "APIリクエストに失敗しました");
-    }
-    return response.json();
-  };
 
   const fetchTags = async () => {
     setLoading(true);
@@ -91,3 +78,4 @@ export const useTags = () => {
     createTag,
   };
 };
+

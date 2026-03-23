@@ -1,4 +1,4 @@
-import { useState, useContext } from "react";
+﻿import { useState, useContext } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 
 // 行動種別の型定義
@@ -24,26 +24,10 @@ export const useActionTypes = () => {
     throw new Error("useActionTypes must be used within AuthProvider");
   }
 
-  const { token } = authContext;
+  const { authFetch } = authContext;
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1";
 
   // 認証ヘッダーを含むfetchリクエスト
-  const authFetch = async (url: string, options: RequestInit = {}) => {
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...(options.headers as HeadersInit),
-    };
-
-    const response = await fetch(url, { ...options, headers });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error?.message || "APIエラーが発生しました");
-    }
-
-    return response.json();
-  };
 
   // 行動種別の一覧を取得
   const fetchActionTypes = async () => {
@@ -178,3 +162,4 @@ export const useActionTypes = () => {
     deleteActionType,
   };
 };
+

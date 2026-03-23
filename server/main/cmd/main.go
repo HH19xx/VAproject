@@ -134,6 +134,11 @@ func main() {
 		WorldSignalUsecase: worldSignalUsecase,
 	}
 	analysisContextHandler := &handler.AnalysisContextHandler{Usecase: analysisContextUsecase}
+	distributionAnalysisUsecase := &usecases.DistributionAnalysisUsecase{
+		ActionLogUsecase:   actionLogUsecase,
+		WorldSignalUsecase: worldSignalUsecase,
+	}
+	distributionAnalysisHandler := &handler.DistributionAnalysisHandler{Usecase: distributionAnalysisUsecase}
 
 	// HTTPルーティング設定
 	mux := http.NewServeMux()
@@ -233,6 +238,7 @@ func main() {
 	mux.HandleFunc("/api/v1/world_signals", worldSignalHandler.ListHandler())
 	mux.HandleFunc("/api/v1/world_signals/fetch", worldSignalHandler.FetchOpenMeteoHandler())
 	mux.HandleFunc("/api/v1/analysis/context", analysisContextHandler.BuildHandler())
+	mux.HandleFunc("/api/v1/analysis/distribution", distributionAnalysisHandler.AnalyzeHandler())
 
 	// 行動種別のエンドポイント（認証必須）
 	mux.HandleFunc("/api/v1/action_types", func(w http.ResponseWriter, r *http.Request) {

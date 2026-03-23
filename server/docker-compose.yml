@@ -3,7 +3,6 @@ services:
     image: postgres:15
     container_name: postgres_db
     restart: always
-    # .envファイルを同じディレクトリから読み込み
     env_file:
       - .env
     environment:
@@ -29,7 +28,6 @@ services:
       - "8080:8080"
     networks:
       - backend
-    # .envファイルを同じディレクトリから読み込み
     env_file:
       - .env
     environment:

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+﻿import { createContext, useContext, useEffect, useState } from "react";
 import type { ReactNode } from "react";
 
 // 認証コンテキストの型定義
@@ -8,6 +8,7 @@ interface AuthContextType {
   userID: number | null;
   login: (name: string, password: string) => Promise<void>;
   logout: () => void;
+  authFetch: (url: string, options?: RequestInit) => Promise<any>;
   loading: boolean;
 }
 
@@ -20,7 +21,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
   const [userID, setUserID] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initialized, setInitialized] = useState(false); // ★ localStorage復元完了フラグ
+  const [initialized, setInitialized] = useState(false);
 
   // アクセストークンとリフレッシュトークンをlocalStorageと状態に保存
   const persistTokens = (accessToken: string, newRefreshToken: string) => {
@@ -176,6 +177,47 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // ログアウト処理
+  const authFetch = async (url: string, options: RequestInit = {}) => {
+    const buildHeaders = (accessToken: string | null): HeadersInit => {
+      const headers: HeadersInit = {
+        ...(options.body ? { "Content-Type": "application/json" } : {}),
+        ...(options.headers as HeadersInit),
+      };
+      if (accessToken) {
+        return {
+          ...headers,
+          Authorization: `Bearer ${accessToken}`,
+        };
+      }
+      return headers;
+    };
+
+    const run = async (accessToken: string | null) =>
+      fetch(url, {
+        ...options,
+        headers: buildHeaders(accessToken),
+      });
+
+    let currentToken = token ?? localStorage.getItem("token");
+    let response = await run(currentToken);
+
+    if (response.status === 401) {
+      try {
+        currentToken = await attemptRefresh();
+        response = await run(currentToken);
+      } catch (err) {
+        clearTokens();
+        throw err instanceof Error ? err : new Error("refresh failed");
+      }
+    }
+
+    if (!response.ok) {
+      const errBody = await response.json().catch(() => ({}));
+      throw new Error(errBody?.error?.message || "API request failed");
+    }
+
+    return response.json();
+  };
   const logout = () => {
     clearTokens();
   };
@@ -183,7 +225,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ token, refreshToken, userID, login, logout, loading }}
+      value={{ token, refreshToken, userID, login, logout, authFetch, loading }}
     >
       {children}
     </AuthContext.Provider>
@@ -196,3 +238,4 @@ export const useAuth = () => {
   if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
   return ctx;
 };
+

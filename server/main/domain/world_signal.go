@@ -9,6 +9,10 @@ type WorldSignal struct {
 	ID              int             `json:"id"`
 	Source          string          `json:"source"`
 	LocationKey     string          `json:"location_key"`
+	SignalType      string          `json:"signal_type"`
+	SignalLabel     *string         `json:"signal_label,omitempty"`
+	SignalUnit      *string         `json:"signal_unit,omitempty"`
+	SignalValue     *float64        `json:"signal_value,omitempty"`
 	Latitude        float64         `json:"latitude"`
 	Longitude       float64         `json:"longitude"`
 	ObservedAt      time.Time       `json:"observed_at"`

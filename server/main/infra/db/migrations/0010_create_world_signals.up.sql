@@ -2,6 +2,10 @@ CREATE TABLE IF NOT EXISTS world_signals (
     id SERIAL PRIMARY KEY,
     source VARCHAR(64) NOT NULL DEFAULT 'open_meteo',
     location_key VARCHAR(128) NOT NULL,
+    signal_type VARCHAR(128) NOT NULL DEFAULT '',
+    signal_label VARCHAR(255) NULL,
+    signal_unit VARCHAR(64) NULL,
+    signal_value DOUBLE PRECISION NULL,
     latitude NUMERIC(9,6) NOT NULL,
     longitude NUMERIC(9,6) NOT NULL,
     observed_at TIMESTAMPTZ NOT NULL,
@@ -18,9 +22,9 @@ CREATE TABLE IF NOT EXISTS world_signals (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS uq_world_signals_source_location_observed
-ON world_signals(source, location_key, observed_at)
+ON world_signals(source, location_key, signal_type, observed_at)
 WHERE deleted_at IS NULL;
 
 CREATE INDEX IF NOT EXISTS idx_world_signals_lookup
-ON world_signals(source, location_key, observed_at DESC)
+ON world_signals(source, location_key, signal_type, observed_at DESC)
 WHERE deleted_at IS NULL;

@@ -36,17 +36,22 @@ func (r *worldSignalRepository) UpsertMany(ctx context.Context, signals []*domai
 
 	query := `
 		INSERT INTO world_signals (
-			source, location_key, latitude, longitude, observed_at,
+			source, location_key, signal_type, signal_label, signal_unit, signal_value,
+			latitude, longitude, observed_at,
 			temperature_c, precipitation_mm, wind_speed_ms, weather_code,
 			raw_json, create_user, update_user
 		) VALUES (
-			$1, $2, $3, $4, $5,
-			$6, $7, $8, $9,
-			$10, $11, $12
+			$1, $2, $3, $4, $5, $6,
+			$7, $8, $9,
+			$10, $11, $12, $13,
+			$14, $15, $16
 		)
-		ON CONFLICT (source, location_key, observed_at)
+		ON CONFLICT (source, location_key, signal_type, observed_at)
 		WHERE deleted_at IS NULL
 		DO UPDATE SET
+			signal_label = EXCLUDED.signal_label,
+			signal_unit = EXCLUDED.signal_unit,
+			signal_value = EXCLUDED.signal_value,
 			latitude = EXCLUDED.latitude,
 			longitude = EXCLUDED.longitude,
 			temperature_c = EXCLUDED.temperature_c,
@@ -73,6 +78,10 @@ func (r *worldSignalRepository) UpsertMany(ctx context.Context, signals []*domai
 			ctx,
 			signal.Source,
 			signal.LocationKey,
+			signal.SignalType,
+			signal.SignalLabel,
+			signal.SignalUnit,
+			signal.SignalValue,
 			signal.Latitude,
 			signal.Longitude,
 			signal.ObservedAt,
@@ -98,7 +107,7 @@ func (r *worldSignalRepository) UpsertMany(ctx context.Context, signals []*domai
 
 func (r *worldSignalRepository) FindByRange(
 	ctx context.Context,
-	source, locationKey string,
+	source, locationKey, signalType string,
 	from, to time.Time,
 	limit int,
 ) ([]*domain.WorldSignal, error) {
@@ -123,6 +132,10 @@ func (r *worldSignalRepository) FindByRange(
 		args = append(args, locationKey)
 		conditions = append(conditions, fmt.Sprintf("location_key = $%d", len(args)))
 	}
+	if strings.TrimSpace(signalType) != "" {
+		args = append(args, signalType)
+		conditions = append(conditions, fmt.Sprintf("signal_type = $%d", len(args)))
+	}
 
 	args = append(args, limit)
 	limitArgPos := len(args)
@@ -132,6 +145,10 @@ func (r *worldSignalRepository) FindByRange(
 			id,
 			source,
 			location_key,
+			signal_type,
+			signal_label,
+			signal_unit,
+			signal_value,
 			latitude,
 			longitude,
 			observed_at,
@@ -165,6 +182,10 @@ func (r *worldSignalRepository) FindByRange(
 			&signal.ID,
 			&signal.Source,
 			&signal.LocationKey,
+			&signal.SignalType,
+			&signal.SignalLabel,
+			&signal.SignalUnit,
+			&signal.SignalValue,
 			&signal.Latitude,
 			&signal.Longitude,
 			&signal.ObservedAt,

@@ -12,6 +12,7 @@ type AnalysisContextSummary struct {
 	SignalCount         int      `json:"signal_count"`
 	AvgTagsPerAction    float64  `json:"avg_tags_per_action"`
 	AvgTemperatureC     *float64 `json:"avg_temperature_c,omitempty"`
+	AvgSignalValue      *float64 `json:"avg_signal_value,omitempty"`
 	TotalPrecipitationM float64  `json:"total_precipitation_mm"`
 }
 
@@ -33,7 +34,9 @@ type AnalysisContextUsecase struct {
 func (u *AnalysisContextUsecase) Build(
 	ctx context.Context,
 	userID int,
+	source string,
 	locationKey string,
+	signalType string,
 	from, to time.Time,
 	limit int,
 ) (*AnalysisContextResult, error) {
@@ -52,7 +55,10 @@ func (u *AnalysisContextUsecase) Build(
 		return nil, err
 	}
 
-	worldSignals, err := u.WorldSignalUsecase.ListByRange(ctx, "open_meteo", locationKey, from, to, limit)
+	if source == "" {
+		source = "open_meteo"
+	}
+	worldSignals, err := u.WorldSignalUsecase.ListByRange(ctx, source, locationKey, signalType, from, to, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -68,6 +74,8 @@ func (u *AnalysisContextUsecase) Build(
 		Meta: map[string]interface{}{
 			"action_total": total,
 			"action_meta":  meta,
+			"source":       source,
+			"signal_type":  signalType,
 		},
 	}, nil
 }
@@ -99,9 +107,21 @@ func buildAnalysisContextSummary(actionLogs []*domain.ActionLog, worldSignals []
 				precipSum += *signal.PrecipitationMM
 			}
 		}
+		signalValueCount := 0
+		signalValueSum := 0.0
+		for _, signal := range worldSignals {
+			if signal.SignalValue != nil {
+				signalValueSum += *signal.SignalValue
+				signalValueCount++
+			}
+		}
 		if tempCount > 0 {
 			avg := tempSum / float64(tempCount)
 			summary.AvgTemperatureC = &avg
+		}
+		if signalValueCount > 0 {
+			avg := signalValueSum / float64(signalValueCount)
+			summary.AvgSignalValue = &avg
 		}
 		summary.TotalPrecipitationM = precipSum
 	}

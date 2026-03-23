@@ -1,11 +1,17 @@
-import { useContext, useState } from "react";
+﻿import { useContext, useState } from "react";
 import { AuthContext } from "../contexts/AuthContext";
 import type { ActionLog } from "./useActions";
+
+export type ExternalDataSource = "open_meteo" | "e_stat_dashboard";
 
 export interface WorldSignal {
   id: number;
   source: string;
   location_key: string;
+  signal_type: string;
+  signal_label?: string;
+  signal_unit?: string;
+  signal_value?: number;
   latitude: number;
   longitude: number;
   observed_at: string;
@@ -20,6 +26,7 @@ export interface AnalysisContextSummary {
   signal_count: number;
   avg_tags_per_action: number;
   avg_temperature_c?: number;
+  avg_signal_value?: number;
   total_precipitation_mm: number;
 }
 
@@ -34,6 +41,7 @@ export interface AnalysisContextResult {
 }
 
 export interface FetchWorldSignalInput {
+  source: ExternalDataSource;
   locationKey: string;
   latitude: number;
   longitude: number;
@@ -50,28 +58,16 @@ export const useWorldSignals = () => {
     throw new Error("useWorldSignals は AuthProvider 内でのみ利用できます");
   }
 
-  const { token } = authContext;
+  const { authFetch } = authContext;
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api/v1";
 
-  const authFetch = async (url: string, options: RequestInit = {}) => {
-    const headers: HeadersInit = {
-      "Content-Type": "application/json",
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...(options.headers as HeadersInit),
-    };
-    const response = await fetch(url, { ...options, headers });
-    if (!response.ok) {
-      const errBody = await response.json().catch(() => ({}));
-      throw new Error(errBody?.error?.message || "APIリクエストに失敗しました");
-    }
-    return response.json();
-  };
 
   const fetchOpenMeteo = async (input: FetchWorldSignalInput): Promise<boolean> => {
     setLoading(true);
     setError(null);
     try {
       const payload = {
+        source: input.source,
         location_key: input.locationKey,
         latitude: input.latitude,
         longitude: input.longitude,
@@ -95,7 +91,9 @@ export const useWorldSignals = () => {
   };
 
   const fetchAnalysisContext = async (
+    source: ExternalDataSource,
     locationKey: string,
+    signalType: string,
     fromISO: string,
     toISO: string,
     limit = 200
@@ -104,7 +102,11 @@ export const useWorldSignals = () => {
     setError(null);
     try {
       const params = new URLSearchParams();
+      params.set("source", source);
       params.set("location_key", locationKey);
+      if (signalType) {
+        params.set("signal_type", signalType);
+      }
       params.set("from", fromISO);
       params.set("to", toISO);
       params.set("limit", String(limit));
@@ -128,3 +130,4 @@ export const useWorldSignals = () => {
     fetchAnalysisContext,
   };
 };
+
