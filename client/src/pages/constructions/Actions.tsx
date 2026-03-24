@@ -644,9 +644,27 @@ const Actions = () => {
     <div className={styles.container}>
       <div className={styles.header}>
         <h1 className={styles.title}>Déconstruction d'Objet機能</h1>
-        <button className={styles.primaryButton} onClick={() => navigate("/records/actions-form")}>
-          新規行動記録
-        </button>
+        <div className={styles.actionsRow}>
+          <button
+            className={styles.secondaryButton}
+            onClick={() =>
+              navigate("/statistics", {
+                state: {
+                  dataset: "action_logs",
+                  danbooruQuery,
+                  from,
+                  to,
+                  filterTagIDs,
+                },
+              })
+            }
+          >
+            この検索条件で統計分析
+          </button>
+          <button className={styles.primaryButton} onClick={() => navigate("/records/actions-form")}>
+            新規行動記録
+          </button>
+        </div>
       </div>
 
       {error && <div className={styles.errorBox}>エラー: {error}</div>}

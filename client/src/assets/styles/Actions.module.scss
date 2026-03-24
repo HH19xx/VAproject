@@ -15,6 +15,13 @@
   margin-bottom: 20px;
 }
 
+.actionsRow {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .title {
   margin: 0;
   font-size: 24px;
