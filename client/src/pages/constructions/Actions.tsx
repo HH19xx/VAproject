@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useActions } from "../../hooks/useActions";
 import { usePrototypes } from "../../hooks/usePrototypes";
@@ -44,25 +44,13 @@ import {
   toLocalDateTimeValue,
 } from "./components/actionsSearchSectionHelpers";
 import {
-  type ContextVizMode,
-  type ScatterAxisKey,
-  buildAvailableWorldAxisEntries,
-  buildContextScatterPoints,
   buildContextStaleState,
-  buildContextTimePoints,
 } from "./components/actionsOpenDataSectionHelpers";
-import {
-  ACTION_AXIS_DEFAULTS,
-  actionAxisValue,
-  calculateDistributionStats,
-  defaultAxisByDataset,
-  deriveSeverity,
-  toLegacyDistributionStats,
-  toSnapshotScore,
-  toSnapshotSeverity,
-  type AnalysisViewState,
-  type SelectedDistributionBin,
-} from "./components/actionsDistributionSectionHelpers";
+import { buildAvailableWorldAxisEntries } from "./components/actionsDistribution/externalAxisLabels";
+import { ACTION_AXIS_DEFAULTS, actionAxisValue, defaultAxisByDataset } from "./components/actionsDistribution/actionsDistributionAxes";
+import type { AnalysisViewState } from "./components/actionsDistribution/actionsDistributionScore";
+import { calculateDistributionStats, deriveSeverity, toLegacyDistributionStats, toSnapshotScore, toSnapshotSeverity } from "./components/actionsDistribution/actionsDistributionScore";
+import type { SelectedDistributionBin } from "./components/actionsDistribution/actionsDistributionTypes";
 import { type HistorySortKey } from "./components/actionsHistorySectionHelpers";
 
 const Actions = () => {
@@ -109,9 +97,6 @@ const Actions = () => {
   const [pastDays, setPastDays] = useState("7");
   const [forecastDays, setForecastDays] = useState("1");
   const [contextResult, setContextResult] = useState<AnalysisContextResult | null>(null);
-  const [contextVizMode, setContextVizMode] = useState<ContextVizMode>("time");
-  const [scatterXAxis, setScatterXAxis] = useState<ScatterAxisKey>("temperature_c");
-  const [scatterYAxis, setScatterYAxis] = useState<ScatterAxisKey>("precipitation_mm");
   const [actionScatterXAxis, setActionScatterXAxis] = useState<string>("occurred_at");
   const [actionScatterYAxis, setActionScatterYAxis] = useState<string>("tag_count");
   const [historySeverityFilter, setHistorySeverityFilter] = useState<AnalysisSeverity | "ALL">("ALL");
@@ -138,8 +123,6 @@ const Actions = () => {
 
   useEffect(() => {
     if (externalDataSource === "e_stat_dashboard") {
-      setScatterXAxis("observed_year");
-      setScatterYAxis("signal_value");
       if (distributionDataset === "world_signals") {
         setDistributionAxis("signal_value");
       }
@@ -149,8 +132,6 @@ const Actions = () => {
       return;
     }
 
-    setScatterXAxis("temperature_c");
-    setScatterYAxis("weather_code");
     if (distributionDataset === "world_signals" && distributionAxis === "signal_value") {
       setDistributionAxis("temperature_c");
     }
@@ -536,14 +517,6 @@ const Actions = () => {
     await deleteAction(id);
   };
 
-  const contextTimePoints = useMemo(
-    () => buildContextTimePoints(contextResult, externalDataSource),
-    [contextResult, externalDataSource]
-  );
-  const contextScatterPoints = useMemo(
-    () => buildContextScatterPoints(contextResult, scatterXAxis, scatterYAxis),
-    [contextResult, scatterXAxis, scatterYAxis]
-  );
   const availableWorldAxisEntries = useMemo(
     () => buildAvailableWorldAxisEntries(externalDataSource),
     [externalDataSource]
@@ -719,12 +692,6 @@ const Actions = () => {
         distributionDataset={distributionDataset}
         contextResult={contextResult}
         contextIsStale={contextIsStale}
-        contextVizMode={contextVizMode}
-        scatterXAxis={scatterXAxis}
-        scatterYAxis={scatterYAxis}
-        availableWorldAxisEntries={availableWorldAxisEntries}
-        contextTimePoints={contextTimePoints}
-        contextScatterPoints={contextScatterPoints}
         onToggleOpen={setOpenDataPanelOpen}
         onExternalDataSourceChange={setExternalDataSource}
         onExternalSignalTypeChange={setExternalSignalType}
@@ -736,9 +703,6 @@ const Actions = () => {
         onRefreshOpenDataView={() => void handleFetchWorldSignals()}
         onLoadAnalysisContext={() => void handleLoadAnalysisContext()}
         onSwitchDistributionDataset={switchDistributionDataset}
-        onContextVizModeChange={setContextVizMode}
-        onScatterXAxisChange={setScatterXAxis}
-        onScatterYAxisChange={setScatterYAxis}
         signalOptions={eStatDashboardSignalOptions}
       />
 
@@ -793,3 +757,4 @@ const Actions = () => {
 };
 
 export default Actions;
+

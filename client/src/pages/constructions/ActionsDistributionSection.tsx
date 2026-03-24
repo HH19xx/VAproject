@@ -1,21 +1,19 @@
-import styles from "../../assets/styles/Actions.module.scss";
+﻿import styles from "../../assets/styles/Actions.module.scss";
 import type { DistributionAnalysisResult, DistributionDataset } from "../../hooks/useDistributionAnalysis";
-import type { ScatterAxisKey } from "./components/actionsOpenDataSectionHelpers";
+import type { ScatterAxisKey } from "./components/actionsDistribution/externalAxisLabels";
+import { externalAxisLabelMap } from "./components/actionsDistribution/externalAxisLabels";
+import { renderDistributionOverviewSvg, renderGapSvg } from "./components/actionsDistribution/actionsDistributionChart";
 import {
-  axisLabelMap,
   formatNum,
-  renderDistributionOverviewSvg,
-  renderGapSvg,
   toActionAxisLabel,
   toBadgeClass,
-  toDistributionSeverity,
   toIssueClass,
   toResidualAxisReasonLabel,
   toResidualAxisTypeLabel,
   toResidualStrategyLabel,
-  type AnalysisViewState,
-  type SelectedDistributionBin,
-} from "./components/actionsDistributionSectionHelpers";
+} from "./components/actionsDistribution/actionsDistributionLabels";
+import { toDistributionSeverity, type AnalysisViewState } from "./components/actionsDistribution/actionsDistributionScore";
+import type { SelectedDistributionBin } from "./components/actionsDistribution/actionsDistributionTypes";
 
 interface ActionsDistributionSectionProps {
   distributionResult: DistributionAnalysisResult | null;
@@ -115,7 +113,7 @@ const ActionsDistributionSection = ({
             className={styles.successButton}
             onClick={() => switchDistributionDataset(distributionDataset === "action_logs" ? "world_signals" : "action_logs")}
           >
-            {distributionDataset === "action_logs" ? "外部ビッグデータへ切替" : "行動記録へ切替"}
+            {distributionDataset === "action_logs" ? "外部ビッグデータ分析へ切替" : "行動記録分析へ切替"}
           </button>
           <button
             className={styles.secondaryButton}
@@ -132,8 +130,11 @@ const ActionsDistributionSection = ({
               対象: {distributionDatasetLabel} / 軸:{" "}
               {distributionResult.dataset === "action_logs"
                 ? toActionAxisLabel(distributionResult.axis)
-                : axisLabelMap[distributionResult.axis as ScatterAxisKey] || distributionResult.axis}
+                : externalAxisLabelMap[distributionResult.axis as keyof typeof externalAxisLabelMap] || distributionResult.axis}
             </div>
+
+
+
 
             {distributionResult.meta && (
               <div className={styles.analysisMetaGrid}>
@@ -176,15 +177,14 @@ const ActionsDistributionSection = ({
               <>
                 <div className={styles.analysisTitle}>0. 補完グラフ</div>
                 <div className={styles.analysisRow}>
-                  正規分布へ近づくために、どの帯域へどれだけ補完が必要かを先に可視化します。
-                </div>
+                  正規分布へ近づくために、どの帯域へどれだけ補完が必要かを確認します。</div>
 
                 {selectedDistributionBin && (
                   <div className={styles.selectedBinInfo}>
                     選択帯域: {formatNum(selectedDistributionBin.bin.start, 2)} - {formatNum(selectedDistributionBin.bin.end, 2)} /
                     観測={formatNum(selectedDistributionBin.bin.observed_count, 2)} /
                     期待={formatNum(selectedDistributionBin.bin.expected_count, 2)} /
-                    差分={formatNum(selectedDistributionBin.bin.gap_count, 2)}
+                    ギャップ={formatNum(selectedDistributionBin.bin.gap_count, 2)}
                   </div>
                 )}
                 {selectedBinStatus && (
@@ -235,8 +235,8 @@ const ActionsDistributionSection = ({
               件数={distributionResult.residual_current.count}
             </div>
             <div className={styles.analysisRow}>
-              生分布の平均={formatNum(distributionResult.current.mean, 2)} / 分散={formatNum(distributionResult.current.variance, 2)} /
-              欠損={distributionResult.current.missing_count} / 件数={distributionResult.current.count}
+              生分布平均={formatNum(distributionResult.current.mean, 2)} / 分散={formatNum(distributionResult.current.variance, 2)} /
+              欠損数={distributionResult.current.missing_count} / 件数={distributionResult.current.count}
             </div>
             {distributionResult.residual_baseline && (
               <div className={styles.analysisRow}>
@@ -249,7 +249,7 @@ const ActionsDistributionSection = ({
 
             <div className={styles.analysisTitle}>2. 隠れた要因</div>
             {distributionResult.hidden_factor_candidates.length === 0 ? (
-              <div className={styles.analysisRow}>目立った隠れ要因候補はまだ出ていません。</div>
+              <div className={styles.analysisRow}>隠れた要因候補はまだ抽出されていません。</div>
             ) : (
               distributionResult.hidden_factor_candidates.map((item, index) => (
                 <div key={`hidden-factor-${index}`} className={styles.analysisRow}>
@@ -260,7 +260,7 @@ const ActionsDistributionSection = ({
 
             <div className={styles.analysisTitle}>3. 追加すべき条件</div>
             {distributionResult.format_suggestions.length === 0 ? (
-              <div className={styles.analysisRow}>追加候補はまだありません。</div>
+              <div className={styles.analysisRow}>追加条件の提案はまだありません。</div>
             ) : (
               distributionResult.format_suggestions.map((item, index) => (
                 <div key={`format-suggestion-${index}`} className={styles.analysisRow}>
@@ -271,7 +271,7 @@ const ActionsDistributionSection = ({
 
             <div className={styles.analysisTitle}>候補タグ</div>
             {distributionResult.suggested_tags.length === 0 ? (
-              <div className={styles.analysisRow}>候補タグはありません。</div>
+              <div className={styles.analysisRow}>候補タグはまだありません。</div>
             ) : (
               <div className={styles.suggestionList}>
                 {distributionResult.suggested_tags.map((item, index) => (
@@ -283,7 +283,7 @@ const ActionsDistributionSection = ({
                       + {item}
                     </button>
                     <button type="button" className={styles.suggestionSearchButton} onClick={() => void appendSuggestedTagToQuery(item, "search")}>
-                      追加して即検索
+                      追加して検索
                     </button>
                   </div>
                 ))}
@@ -292,7 +292,7 @@ const ActionsDistributionSection = ({
 
             <div className={styles.analysisTitle}>候補軸</div>
             {distributionResult.suggested_axes.length === 0 ? (
-              <div className={styles.analysisRow}>候補軸はありません。</div>
+              <div className={styles.analysisRow}>候補軸はまだありません。</div>
             ) : (
               <div className={styles.suggestionList}>
                 {distributionResult.suggested_axes.map((item, index) => (
@@ -304,7 +304,10 @@ const ActionsDistributionSection = ({
                   >
                     {distributionResult.dataset === "action_logs"
                       ? toActionAxisLabel(item)
-                      : axisLabelMap[item as ScatterAxisKey] || item}
+                      : externalAxisLabelMap[item as keyof typeof externalAxisLabelMap] || item}
+
+
+
                   </button>
                 ))}
               </div>
@@ -324,14 +327,12 @@ const ActionsDistributionSection = ({
       {analysisState && (
         <div className={styles.analysisPanel}>
           <div className={styles.analysisTitle}>
-            従来分析（補助）
-            <span className={toBadgeClass(analysisState.severity)}>{analysisState.severity}</span>
+            従来分析（補助） <span className={toBadgeClass(analysisState.severity)}>{analysisState.severity}</span>
           </div>
           <div className={styles.analysisRow}>
-            上段の分布分析を主表示として見てください。以下は旧互換の差分表示です。
-          </div>
+            現在の主表示は上段の分布分析です。ここでは旧互換の差分指標を補助表示します。</div>
           <div className={styles.analysisRow}>
-            スコア={formatNum(analysisState.score, 2)} / 平均差={formatNum(analysisState.deltaAvgTag, 2)} / 分散差=
+            スコア={formatNum(analysisState.score, 2)} / 平均タグ差={formatNum(analysisState.deltaAvgTag, 2)} / 分散差=
             {formatNum(analysisState.deltaVarTag, 2)} / プロトタイプ率差=
             {formatNum(analysisState.deltaPrototypeRate * 100, 2)}%
           </div>
@@ -347,3 +348,4 @@ const ActionsDistributionSection = ({
 };
 
 export default ActionsDistributionSection;
+

@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import styles from "../../assets/styles/Actions.module.scss";
 import type { ActionLog } from "../../hooks/useActions";
-import { toActionAxisLabel } from "./components/actionsDistributionSectionHelpers";
+import { toActionAxisLabel } from "./components/actionsDistribution/actionsDistributionLabels";
 
 interface ActionsResultsSectionProps {
   paginationTotal: number;
