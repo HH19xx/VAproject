@@ -1,39 +1,220 @@
-// 共通ボタンスタイル（グローバルで使用）
-.btn-primary {
-  padding: 0.75rem 1.5rem;
-  background-color: var(--primary-color);
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 500;
+:root {
+  /* background */
+  --color-bg-app: #6f829a;
+  --color-bg-panel-dark: #42556d;
+  --color-bg-panel-light: #f5f2ee;
+  --color-bg-surface: #f8f6f2;
+
+  /* text */
+  --color-text-primary: #fffaf4;
+  --color-text-secondary: #d7dde6;
+  --color-text-muted: #aeb8c6;
+  --color-text-dark: #233041;
+
+  /* accent */
+  --color-accent-primary: #f3cf57;
+  --color-accent-secondary: #a93a53;
+  --color-accent-success: #7fa38f;
+  --color-accent-warning: #d6a44f;
+  --color-accent-danger: #b6535f;
+
+  /* border */
+  --color-border-strong: #213041;
+  --color-border-soft: rgba(255, 255, 255, 0.18);
+  --color-border-contrast: rgba(33, 48, 65, 0.28);
+
+  /* radius */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+
+  /* border width */
+  --border-width-thin: 1px;
+  --border-width-base: 2px;
+  --border-width-strong: 3px;
+
+  /* shadow */
+  --shadow-soft: 0 6px 18px rgba(24, 36, 50, 0.08);
+  --shadow-panel: 0 14px 36px rgba(24, 36, 50, 0.12);
+  --shadow-focus: 0 0 0 3px rgba(243, 207, 87, 0.18);
+
+  /* spacing */
+  --space-2xs: 0.25rem;
+  --space-xs: 0.5rem;
+  --space-sm: 0.75rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+
+  /* typography */
+  --font-family-display: "A1 Gothic M", "Yu Gothic", "Hiragino Sans", sans-serif;
+  --font-family-body: "Yu Gothic", "Hiragino Sans", "Segoe UI", sans-serif;
+  --font-family-mono: "Cascadia Code", "Fira Code", "Consolas", monospace;
+
+  --font-size-caption: 0.75rem;
+  --font-size-body: 1rem;
+  --font-size-label: 0.875rem;
+  --font-size-heading-sm: 1.25rem;
+  --font-size-heading-md: 1.75rem;
+  --font-size-heading-lg: 2.5rem;
+  --font-size-display: 3.5rem;
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+}
+
+
+
+@mixin button-interactive-base {
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background-color 0.18s ease,
+    box-shadow 0.18s ease,
+    color 0.18s ease,
+    opacity 0.18s ease;
 
   &:hover:not(:disabled) {
-    background-color: var(--secondary-color);
+    transform: translateY(-1px);
   }
 
   &:disabled {
-    background-color: #ccc;
+    opacity: 0.7;
     cursor: not-allowed;
   }
 }
 
-.btn-secondary {
-  padding: 0.5rem 1rem;
-  background-color: #6b7280;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
+@mixin button-card {
+  @include button-interactive-base();
+  padding: 0.95rem 1.2rem;
+  border: var(--border-width-base) solid rgba(33, 48, 65, 0.16);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(245, 242, 238, 0.3)),
+    rgba(255, 255, 255, 0.46);
+  color: var(--color-text-dark);
+  box-shadow: none;
 
-  &:hover {
-    background-color: #4b5563;
+  &:hover:not(:disabled) {
+    border-color: var(--color-accent-secondary);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(245, 242, 238, 0.42)),
+      rgba(255, 255, 255, 0.64);
+    box-shadow: 0 16px 28px rgba(33, 48, 65, 0.14);
   }
+}
+
+@mixin button-outer {
+  @include button-interactive-base();
+  padding: 0.8rem 1.15rem;
+  border: var(--border-width-base) solid rgba(33, 48, 65, 0.18);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-dark);
+  box-shadow: none;
+
+  &:hover:not(:disabled) {
+    border-color: var(--color-accent-secondary);
+    background: rgba(255, 255, 255, 0.72);
+    box-shadow: 0 14px 24px rgba(33, 48, 65, 0.12);
+  }
+}
+
+@mixin button-critical {
+  @include button-interactive-base();
+  padding: 0.95rem 1.2rem;
+  border: var(--border-width-base) solid var(--color-border-strong);
+  border-radius: var(--radius-pill);
+  background: var(--color-border-strong);
+  color: var(--color-text-primary);
+  box-shadow: none;
+
+  &:hover:not(:disabled) {
+    border-color: var(--color-accent-primary);
+    background: #2f4258;
+    box-shadow: 0 14px 24px rgba(33, 48, 65, 0.14);
+  }
+}
+
+@mixin surface-panel($alpha: 0.9, $shadow: var(--shadow-panel)) {
+  border: var(--border-width-base) solid rgba(33, 48, 65, 0.16);
+  border-radius: var(--radius-lg);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.54), rgba(245, 242, 238, 0.3)),
+    rgba(245, 242, 238, $alpha);
+  box-shadow: $shadow;
+}
+
+@mixin surface-card($alpha: 0.78, $shadow: var(--shadow-soft)) {
+  border: var(--border-width-base) solid rgba(33, 48, 65, 0.16);
+  border-radius: var(--radius-md);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.54), rgba(245, 242, 238, 0.28)),
+    rgba(255, 255, 255, $alpha);
+  box-shadow: $shadow;
+}
+
+@mixin message-box($bg, $text, $border) {
+  padding: 0.85rem 1rem;
+  border: var(--border-width-thin) solid $border;
+  border-left: var(--border-width-strong) solid $border;
+  border-radius: var(--radius-sm);
+  background: $bg;
+  color: $text;
+}
+
+@mixin empty-state-box {
+  padding: var(--space-2xl);
+  text-align: center;
+  @include surface-panel(0.76, var(--shadow-soft));
+  color: rgba(35, 48, 65, 0.58);
+}
+
+@mixin data-table-surface {
+  width: 100%;
+  border-collapse: collapse;
+  background: rgba(255, 255, 255, 0.82);
+  border: var(--border-width-thin) solid rgba(33, 48, 65, 0.12);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+}
+
+@mixin accent-hint-box($bg, $text, $border) {
+  padding: 0.7rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border-left: var(--border-width-strong) solid $border;
+  background: $bg;
+  color: $text;
+  font-size: var(--font-size-caption);
+}
+
+@mixin status-badge($bg, $text) {
+  display: inline-block;
+  padding: 0.14rem 0.6rem;
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-caption);
+  font-weight: 700;
+  background: $bg;
+  color: $text;
+}
+
+.btn-primary {
+  @include button-critical();
+  font-size: 1rem;
+  font-weight: var(--font-weight-semibold);
+}
+
+.btn-secondary {
+  @include button-outer();
+  font-size: 0.9rem;
+  font-weight: var(--font-weight-medium);
 }
 
 // 共通カードスタイル

@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useActions, type ActionAttribute, type ActionLog } from "../../hooks/useActions";
+import useSearchTagSuggestions from "../../hooks/useSearchTagSuggestions";
 import { useTags } from "../../hooks/useTags";
 import {
   useWorldSignals,
@@ -9,10 +10,12 @@ import {
   type WorldSignal,
 } from "../../hooks/useWorldSignals";
 import { eStatDashboardSignalOptions } from "../../constants/externalDataCatalog";
+import SearchSuggestionRail from "../../components/search/SearchSuggestionRail";
 import {
   buildTagNameToID,
   parseDanbooruStyleQuery,
 } from "../constructions/components/actionsSearchSectionHelpers";
+import { appendTagToQueryText } from "../constructions/components/actionsSearchController";
 import styles from "../../assets/styles/StatisticsAnalysis.module.scss";
 
 type DatasetKind = "action_logs" | "world_signals";
@@ -289,7 +292,7 @@ const StatisticsAnalysis = () => {
   const location = useLocation();
   const navigationState = (location.state ?? {}) as StatisticsNavigationState;
   const { fetchActionsSnapshot } = useActions();
-  const { tags } = useTags();
+  const { tags, fetchTags } = useTags();
   const { fetchOpenMeteo, fetchAnalysisContext, loading, error } = useWorldSignals();
 
   const actionCompareRangeA = useMemo(() => createRange(ACTION_COMPARE_WINDOW_DAYS, 7), []);
@@ -352,6 +355,11 @@ const StatisticsAnalysis = () => {
   );
   const [pageError, setPageError] = useState<string | null>(null);
   const tagNameToID = useMemo(() => buildTagNameToID(tags), [tags]);
+  const actionSearchSuggestions = useSearchTagSuggestions(tags, actionKeyword, selectedTagIDs, 12);
+
+  useEffect(() => {
+    void fetchTags();
+  }, []);
 
   useEffect(() => {
     const loadRecentActions = async () => {
@@ -464,6 +472,13 @@ const StatisticsAnalysis = () => {
           Number.isFinite(pair.y)
       ).length;
   }, [searchedActionLogs, correlationFrom, correlationTo, correlationActionXAxis, correlationActionYAxis]);
+
+  const appendActionSearchSuggestion = (tagName: string) => {
+    const next = appendTagToQueryText(actionKeyword, tagName);
+    if (!next.alreadyIncluded) {
+      setActionKeyword(next.updatedQuery);
+    }
+  };
 
   const handleSearchActionLogs = async () => {
     setPageError(null);
@@ -866,10 +881,20 @@ const StatisticsAnalysis = () => {
               <input
                 value={actionKeyword}
                 onChange={(event) => setActionKeyword(event.target.value)}
-                placeholder="例: 物価 弁当 / 交通 山手線 / 価格帯=高"
+                placeholder="例: 物価 弁当 / 交通 山手線 / 昼_弁当 / 価格帯=高 / 交通 山手線 | 物価 昼_弁当"
+              />
+              <SearchSuggestionRail
+                title={actionKeyword.trim() ? "入力候補" : "候補タグ"}
+                suggestions={actionSearchSuggestions}
+                emptyMessage={
+                  actionKeyword.trim()
+                    ? "一致するタグはありません。"
+                    : "候補に出せるタグがまだありません。"
+                }
+                onSelectSuggestion={appendActionSearchSuggestion}
               />
               <div className={styles.description}>
-                まず検索して対象集合を確定し、その検索結果から軸を選んで分析します。
+                半角空白区切りです。まず検索して対象集合を確定し、その検索結果から軸を選んで分析します。`A B | C D` は `(A B)~(C D)`、つまり `(A AND B) OR (C AND D)` を意味します。タグ名に半角スペースを入れたい場合は `_` を使ってください。
               </div>
               <div className={styles.actions}>
                 <button

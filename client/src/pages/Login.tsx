@@ -95,20 +95,11 @@ const Login = () => {
           Googleでログイン
         </button>
 
-        <div style={{ marginTop: "20px", textAlign: "center" }}>
-          <p style={{ color: "#666", marginBottom: "10px" }}>アカウントをお持ちでない方</p>
+        <div className={styles.registerBlock}>
+          <p className={styles.registerLead}>アカウントをお持ちでない方</p>
           <button
             onClick={() => navigate("/register")}
-            className="btn-secondary"
-            style={{
-              padding: "10px 20px",
-              backgroundColor: "#6c757d",
-              color: "white",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "14px",
-            }}
+            className={styles.registerButton}
           >
             新規登録
           </button>

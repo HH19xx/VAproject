@@ -1,135 +1,168 @@
-// ログインページ専用スタイル
+@use "./_common" as *;
+
 .container {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 1rem;
+  padding: var(--space-lg);
+  background:
+    radial-gradient(circle at top, rgba(255, 250, 244, 0.12), transparent 30%),
+    linear-gradient(180deg, var(--color-bg-app) 0%, #64788f 100%);
 }
 
 .card {
-  background: white;
-  padding: 2.5rem;
-  border-radius: 12px;
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   width: 100%;
-  max-width: 420px;
+  max-width: 460px;
+  padding: var(--space-2xl);
+  border: var(--border-width-base) solid rgba(33, 48, 65, 0.18);
+  border-radius: var(--radius-lg);
+  background: rgba(245, 242, 238, 0.92);
+  box-shadow: var(--shadow-panel);
+  color: var(--color-text-dark);
 
   h1 {
-    margin: 0 0 0.5rem 0;
-    color: var(--primary-color);
-    font-size: 2rem;
+    margin: 0 0 var(--space-xs) 0;
+    font-family: var(--font-family-display);
+    font-size: clamp(2rem, 4vw, var(--font-size-heading-lg));
+    font-weight: var(--font-weight-bold);
     text-align: center;
+    color: var(--color-text-dark);
+    letter-spacing: 0.04em;
   }
 
   h2 {
-    margin: 0 0 2rem 0;
-    color: var(--text-color);
-    font-size: 1.5rem;
-    font-weight: 500;
+    margin: 0 0 var(--space-xl) 0;
     text-align: center;
+    font-size: var(--font-size-heading-sm);
+    font-weight: var(--font-weight-medium);
+    color: rgba(35, 48, 65, 0.78);
   }
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--space-lg);
 }
 
 .formGroup {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: var(--space-xs);
 
   label {
-    font-weight: 500;
-    color: var(--text-color);
-    font-size: 0.9rem;
+    font-size: var(--font-size-label);
+    font-weight: var(--font-weight-medium);
+    color: var(--color-text-dark);
   }
 
   input {
-    padding: 0.75rem;
-    border: 1px solid var(--border-color);
-    border-radius: 6px;
-    font-size: 1rem;
-    transition: border-color 0.2s;
+    padding: 0.95rem 1rem;
+    border: var(--border-width-base) solid rgba(33, 48, 65, 0.18);
+    border-radius: var(--radius-pill);
+    background: rgba(255, 255, 255, 0.82);
+    color: var(--color-text-dark);
+    font-size: var(--font-size-body);
+    transition:
+      border-color 0.18s ease,
+      box-shadow 0.18s ease,
+      background-color 0.18s ease;
+
+    &::placeholder {
+      color: rgba(35, 48, 65, 0.42);
+    }
 
     &:focus {
       outline: none;
-      border-color: var(--primary-color);
+      border-color: var(--color-accent-primary);
+      box-shadow: var(--shadow-focus);
+      background: #fff;
     }
 
     &:disabled {
-      background-color: #f5f5f5;
+      background: rgba(220, 224, 230, 0.7);
       cursor: not-allowed;
     }
   }
 }
 
-.error {
-  color: var(--error-color);
-  font-size: 0.9rem;
-  margin: 0;
-  padding: 0.5rem;
-  background-color: #fee;
-  border-radius: 4px;
-  border-left: 3px solid var(--error-color);
+.form :global(.btn-primary) {
+  @include button-critical();
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-semibold);
 }
 
-.googleButton {
-  padding: 0.75rem 1.5rem;
-  background-color: white;
-  color: #333;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-
-  &:hover:not(:disabled) {
-    background-color: #f5f5f5;
-  }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
+.error {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border-left: var(--border-width-strong) solid var(--color-accent-danger);
+  border-radius: var(--radius-sm);
+  background: rgba(182, 83, 95, 0.12);
+  color: #8a3140;
+  font-size: var(--font-size-label);
+  line-height: 1.6;
 }
 
 .divider {
-  margin: 1.5rem 0;
-  text-align: center;
+  margin: var(--space-xl) 0;
   position: relative;
+  text-align: center;
 
   &::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 50%;
     left: 0;
     right: 0;
     height: 1px;
-    background-color: var(--border-color);
+    background: rgba(33, 48, 65, 0.16);
   }
 
   span {
-    background-color: white;
-    padding: 0 1rem;
     position: relative;
-    color: #666;
-    font-size: 0.9rem;
+    padding: 0 var(--space-md);
+    background: rgba(245, 242, 238, 0.92);
+    color: rgba(35, 48, 65, 0.58);
+    font-size: var(--font-size-label);
   }
 }
 
-// レスポンシブ対応
+.googleButton {
+  @include button-card();
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  border-radius: var(--radius-pill);
+}
+
+.registerBlock {
+  margin-top: var(--space-xl);
+  text-align: center;
+}
+
+.registerLead {
+  margin: 0 0 var(--space-sm);
+  color: rgba(35, 48, 65, 0.7);
+  font-size: var(--font-size-label);
+}
+
+.registerButton {
+  @include button-outer();
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-medium);
+}
+
 @media (max-width: 768px) {
+  .container {
+    padding: var(--space-md);
+  }
+
   .card {
-    padding: 2rem 1.5rem;
+    padding: var(--space-xl) var(--space-lg);
   }
 }

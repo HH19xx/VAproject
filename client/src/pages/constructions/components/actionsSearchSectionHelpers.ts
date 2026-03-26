@@ -12,7 +12,9 @@ export {
   buildActionScatterPoints,
   buildGroupedTags,
   buildPrototypeNameMap,
+  buildSearchTagSuggestions,
   buildTagNameMap,
   buildTagNameToID,
   formatTagNames,
 } from "./actionsSearch/actionsSearchData";
+export type { SearchTagSuggestion } from "./actionsSearch/actionsSearchData";

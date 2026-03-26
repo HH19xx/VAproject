@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+﻿import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useActions } from "../../hooks/useActions";
 import { usePrototypes } from "../../hooks/usePrototypes";
@@ -6,8 +6,6 @@ import { useTags } from "../../hooks/useTags";
 import { useTargets } from "../../hooks/useTargets";
 import {
   useAnalysisSnapshots,
-  type AnalysisSeverity,
-  type AnalysisSnapshot,
 } from "../../hooks/useAnalysisSnapshots";
 import {
   useDistributionAnalysis,
@@ -16,11 +14,10 @@ import {
 } from "../../hooks/useDistributionAnalysis";
 import {
   useWorldSignals,
-  type AnalysisContextResult,
-  type ExternalDataSource,
 } from "../../hooks/useWorldSignals";
 import { eStatDashboardSignalOptions } from "../../constants/externalDataCatalog";
 import styles from "../../assets/styles/Actions.module.scss";
+import useSearchTagSuggestions from "../../hooks/useSearchTagSuggestions";
 import ActionsSearchSection from "./ActionsSearchSection";
 import ActionsOpenDataSection from "./ActionsOpenDataSection";
 import ActionsDistributionSection from "./ActionsDistributionSection";
@@ -28,8 +25,6 @@ import ActionsHistorySection from "./ActionsHistorySection";
 import ActionsResultsSection from "./ActionsResultsSection";
 import {
   type ParsedQuery,
-  type SortKey,
-  type SortOrder,
   buildActionAxisCandidates,
   buildActionScatterPoints,
   buildGroupedTags,
@@ -44,14 +39,50 @@ import {
   toLocalDateTimeValue,
 } from "./components/actionsSearchSectionHelpers";
 import {
+  appendTagToQueryText,
+  buildActionSearchOptions,
+  buildClearedSearchState,
+  buildMergedAndTagIDs,
+  buildParsedSearchState,
+  buildSavedSearchPayload,
+  buildSearchRange,
+  confirmDeleteAction,
+} from "./components/actionsSearchController";
+import {
   buildContextStaleState,
 } from "./components/actionsOpenDataSectionHelpers";
 import { buildAvailableWorldAxisEntries } from "./components/actionsDistribution/externalAxisLabels";
 import { ACTION_AXIS_DEFAULTS, actionAxisValue, defaultAxisByDataset } from "./components/actionsDistribution/actionsDistributionAxes";
-import type { AnalysisViewState } from "./components/actionsDistribution/actionsDistributionScore";
-import { calculateDistributionStats, deriveSeverity, toLegacyDistributionStats, toSnapshotScore, toSnapshotSeverity } from "./components/actionsDistribution/actionsDistributionScore";
-import type { SelectedDistributionBin } from "./components/actionsDistribution/actionsDistributionTypes";
-import { type HistorySortKey } from "./components/actionsHistorySectionHelpers";
+import { calculateDistributionStats, deriveSeverity } from "./components/actionsDistribution/actionsDistributionScore";
+import {
+  buildFilteredSortedHistory,
+  clearAnalysisHistory,
+  loadAnalysisHistory as loadAnalysisHistoryEntries,
+} from "./components/actionsHistoryController";
+import { loadAnalysisContext, validateWorldSignalInputs } from "./components/actionsOpenDataController";
+import {
+  buildDistributionExecutionState,
+  buildResetDateRangeState,
+  buildSelectedBinStatus,
+  executeDistributionAnalysis,
+  getDistributionDatasetLabel,
+  getDistributionEmptyHint,
+  getSelectedDatasetCount,
+  resolveBaselineWindow,
+  resolveNextDistributionAxis,
+  saveDistributionSnapshot,
+  selectDistributionBin as selectDistributionBinEntry,
+} from "./components/actionsDistributionController";
+import useActionsSearchState from "./components/useActionsSearchState";
+import useActionsDistributionState from "./components/useActionsDistributionState";
+import useActionsOpenDataState from "./components/useActionsOpenDataState";
+import useActionsHistoryState from "./components/useActionsHistoryState";
+import {
+  useActionsAxisSync,
+  useActionsDateRangeSync,
+  useActionsExternalSourceSync,
+  useActionsInitialLoad,
+} from "./components/useActionsEffects";
 
 const Actions = () => {
   const navigate = useNavigate();
@@ -73,115 +104,137 @@ const Actions = () => {
     analyzeDistribution,
   } = useDistributionAnalysis();
 
-  const [sort, setSort] = useState<SortKey>("occurred_at");
-  const [order, setOrder] = useState<SortOrder>("desc");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [isDateRangeManual, setIsDateRangeManual] = useState(false);
-  const [filterTagIDs, setFilterTagIDs] = useState<number[]>([]);
-  const [danbooruQuery, setDanbooruQuery] = useState("");
-  const [queryError, setQueryError] = useState<string | null>(null);
-  const [saveMessage, setSaveMessage] = useState<string | null>(null);
-  const [analysisState, setAnalysisState] = useState<AnalysisViewState | null>(null);
-  const [analysisHistory, setAnalysisHistory] = useState<AnalysisSnapshot[]>([]);
-  const [analysisMessage, setAnalysisMessage] = useState<string | null>(null);
-  const [distributionDataset, setDistributionDataset] = useState<DistributionDataset>("action_logs");
-  const [distributionAxis, setDistributionAxis] = useState<string>("tag_count");
-  const [distributionResult, setDistributionResult] = useState<DistributionAnalysisResult | null>(null);
-  const [selectedDistributionBin, setSelectedDistributionBin] = useState<SelectedDistributionBin | null>(null);
-  const [locationKey, setLocationKey] = useState("tokyo_shinjuku");
-  const [externalDataSource, setExternalDataSource] = useState<ExternalDataSource>("open_meteo");
-  const [externalSignalType, setExternalSignalType] = useState("population_total");
-  const [latitude, setLatitude] = useState("35.6895");
-  const [longitude, setLongitude] = useState("139.6917");
-  const [pastDays, setPastDays] = useState("7");
-  const [forecastDays, setForecastDays] = useState("1");
-  const [contextResult, setContextResult] = useState<AnalysisContextResult | null>(null);
-  const [actionScatterXAxis, setActionScatterXAxis] = useState<string>("occurred_at");
-  const [actionScatterYAxis, setActionScatterYAxis] = useState<string>("tag_count");
-  const [historySeverityFilter, setHistorySeverityFilter] = useState<AnalysisSeverity | "ALL">("ALL");
-  const [historySort, setHistorySort] = useState<HistorySortKey>("created_desc");
-  const [openDataPanelOpen, setOpenDataPanelOpen] = useState(false);
 
-  useEffect(() => {
-    void fetchActions();
-    void fetchTags();
-    void fetchPrototypes();
-    void loadAnalysisHistory();
-    const now = new Date();
-    const past = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    setFrom(toLocalDateTimeValue(past));
-    setTo(toLocalDateTimeValue(now));
-  }, []);
+  const {
+    sort,
+    setSort,
+    order,
+    setOrder,
+    from,
+    setFrom,
+    to,
+    setTo,
+    isDateRangeManual,
+    setIsDateRangeManual,
+    filterTagIDs,
+    setFilterTagIDs,
+    danbooruQuery,
+    setDanbooruQuery,
+    searchedActionLogs,
+    setSearchedActionLogs,
+    queryError,
+    setQueryError,
+    saveMessage,
+    setSaveMessage,
+  } = useActionsSearchState();
+  const {
+    analysisState,
+    setAnalysisState,
+    distributionDataset,
+    setDistributionDataset,
+    distributionAxis,
+    setDistributionAxis,
+    distributionResult,
+    setDistributionResult,
+    selectedDistributionBin,
+    setSelectedDistributionBin,
+    analysisMessage,
+    setAnalysisMessage,
+  } = useActionsDistributionState();
+  const {
+    locationKey,
+    setLocationKey,
+    externalDataSource,
+    setExternalDataSource,
+    externalSignalType,
+    setExternalSignalType,
+    latitude,
+    setLatitude,
+    longitude,
+    setLongitude,
+    pastDays,
+    setPastDays,
+    forecastDays,
+    setForecastDays,
+    contextResult,
+    setContextResult,
+    openDataPanelOpen,
+    setOpenDataPanelOpen,
+    actionScatterXAxis,
+    setActionScatterXAxis,
+    actionScatterYAxis,
+    setActionScatterYAxis,
+  } = useActionsOpenDataState();
+  const {
+    analysisHistory,
+    setAnalysisHistory,
+    historySeverityFilter,
+    setHistorySeverityFilter,
+    historySort,
+    setHistorySort,
+  } = useActionsHistoryState();
 
-  useEffect(() => {
-    const synced = syncDateRangeWithOpenDataWindow(pastDays, forecastDays);
-    if (!synced || isDateRangeManual) return;
-    setFrom(synced.from);
-    setTo(synced.to);
-  }, [pastDays, forecastDays, isDateRangeManual]);
+  useActionsInitialLoad({
+    fetchTags,
+    fetchPrototypes,
+    loadAnalysisHistory,
+    setFrom,
+    setTo,
+    toLocalDateTimeValue,
+  });
 
-  useEffect(() => {
-    if (externalDataSource === "e_stat_dashboard") {
-      if (distributionDataset === "world_signals") {
-        setDistributionAxis("signal_value");
-      }
-      if (locationKey === "tokyo_shinjuku") {
-        setLocationKey("13000");
-      }
-      return;
-    }
+  useActionsDateRangeSync({
+    pastDays,
+    forecastDays,
+    isDateRangeManual,
+    setFrom,
+    setTo,
+    syncDateRangeWithOpenDataWindow,
+  });
 
-    if (distributionDataset === "world_signals" && distributionAxis === "signal_value") {
-      setDistributionAxis("temperature_c");
-    }
-    if (locationKey === "13000") {
-      setLocationKey("tokyo_shinjuku");
-    }
-  }, [externalDataSource, distributionDataset, distributionAxis, locationKey]);
+  useActionsExternalSourceSync({
+    externalDataSource,
+    distributionDataset,
+    distributionAxis,
+    locationKey,
+    setDistributionAxis,
+    setLocationKey,
+  });
 
   const effectiveExternalSignalType = externalDataSource === "e_stat_dashboard" ? externalSignalType : "";
 
-  const loadAnalysisHistory = async () => {
-    const snapshots = await listSnapshots(100);
+  async function loadAnalysisHistory() {
+    const snapshots = await loadAnalysisHistoryEntries(listSnapshots, 100);
     setAnalysisHistory(snapshots);
-  };
+  }
 
   const tagNameMap = useMemo(() => buildTagNameMap(tags), [tags]);
   const tagNameToID = useMemo(() => buildTagNameToID(tags), [tags]);
   const prototypeNameMap = useMemo(() => buildPrototypeNameMap(prototypes), [prototypes]);
   const groupedTags = useMemo(() => buildGroupedTags(tags), [tags]);
+  const searchSuggestions = useSearchTagSuggestions(tags, danbooruQuery, filterTagIDs, 12);
   const actionAxisCandidates = useMemo(() => buildActionAxisCandidates(meta, [...ACTION_AXIS_DEFAULTS]), [meta]);
 
-  useEffect(() => {
-    if (actionAxisCandidates.length === 0) return;
-    const defaultActionAxis = actionAxisCandidates.includes("tag_count") ? "tag_count" : actionAxisCandidates[0];
-    if (!actionAxisCandidates.includes(actionScatterXAxis)) {
-      setActionScatterXAxis(defaultActionAxis);
-    }
-    if (!actionAxisCandidates.includes(actionScatterYAxis)) {
-      setActionScatterYAxis(actionAxisCandidates[1] || actionAxisCandidates[0]);
-    }
-    if (distributionDataset === "action_logs" && !actionAxisCandidates.includes(distributionAxis)) {
-      setDistributionAxis(defaultActionAxis);
-    }
-  }, [actionAxisCandidates, actionScatterXAxis, actionScatterYAxis, distributionAxis, distributionDataset]);
+  useActionsAxisSync({
+    actionAxisCandidates,
+    actionScatterXAxis,
+    actionScatterYAxis,
+    distributionAxis,
+    distributionDataset,
+    setActionScatterXAxis,
+    setActionScatterYAxis,
+    setDistributionAxis,
+  });
 
   const toggleFilterTag = (tagID: number) => {
     setFilterTagIDs((prev) => (prev.includes(tagID) ? prev.filter((id) => id !== tagID) : [...prev, tagID]));
   };
 
-  const resolveBaselineWindow = (): { from?: string; to?: string } => {
-    if (!isValidDateRange(from, to)) return {};
-    const fromDate = new Date(from);
-    const toDate = new Date(to);
-    const duration = toDate.getTime() - fromDate.getTime();
-    const baselineTo = fromDate;
-    const baselineFrom = new Date(fromDate.getTime() - duration);
-    return {
-      from: baselineFrom.toISOString(),
-      to: baselineTo.toISOString(),
-    };
+  const appendSearchSuggestion = (tagName: string) => {
+    const next = appendTagToQueryText(danbooruQuery, tagName);
+    if (!next.alreadyIncluded) {
+      setDanbooruQuery(next.updatedQuery);
+    }
   };
 
   const analyzeCurrentResult = async (
@@ -201,7 +254,7 @@ const Actions = () => {
     });
     if (!currentSnapshot) return;
 
-    const baselineWindow = resolveBaselineWindow();
+    const baselineWindow = isValidDateRange(from, to) ? resolveBaselineWindow(from, to) : {};
     const baselineSnapshot = await fetchActionsSnapshot(1, 500, mergedAnd, {
       sort: "occurred_at",
       order: "desc",
@@ -223,17 +276,8 @@ const Actions = () => {
     });
   };
 
-  const saveDistributionSnapshot = async (result: DistributionAnalysisResult) => {
-    const saved = await createSnapshot({
-      query_text: `${danbooruQuery.trim()} axis:${result.axis} dataset:${result.dataset}`.trim(),
-      severity: toSnapshotSeverity(result),
-      score: Math.round(toSnapshotScore(result)),
-      delta_avg_tag: result.comparison?.mean_diff ?? 0,
-      delta_var_tag: result.comparison?.variance_diff ?? 0,
-      delta_prototype_rate: 0,
-      current: toLegacyDistributionStats(result.current),
-      baseline: result.baseline ? toLegacyDistributionStats(result.baseline) : undefined,
-    });
+  const saveDistributionResultSnapshot = async (result: DistributionAnalysisResult) => {
+    const saved = await saveDistributionSnapshot(createSnapshot, danbooruQuery, result);
 
     if (saved) {
       setAnalysisHistory((prev) => [saved, ...prev].slice(0, 100));
@@ -251,7 +295,7 @@ const Actions = () => {
   ) => {
     const dataset = datasetOverride ?? distributionDataset;
     const axis = axisOverride ?? distributionAxis;
-    const result = await analyzeDistribution({
+    const result = await executeDistributionAnalysis(analyzeDistribution, {
       dataset,
       axis,
       source: dataset === "world_signals" ? externalDataSource : undefined,
@@ -270,41 +314,59 @@ const Actions = () => {
       setDistributionAxis(axis);
       setDistributionResult(result);
       setSelectedDistributionBin(null);
-      await saveDistributionSnapshot(result);
+      await saveDistributionResultSnapshot(result);
     }
   };
 
   const runDistributionAnalysisFromCurrent = async () => {
-    const parsed = parseDanbooruStyleQuery(danbooruQuery, tagNameToID);
-    if (parsed.unknownTokens.length > 0) {
-      setQueryError(`未知のタグがあります: ${parsed.unknownTokens.join(", ")}`);
+    const execution = buildDistributionExecutionState(
+      danbooruQuery,
+      tagNameToID,
+      filterTagIDs,
+      from,
+      to,
+      parseDanbooruStyleQuery
+    );
+    if (!execution.parsed) {
+      setQueryError(execution.error);
       return;
     }
     setQueryError(null);
-    const mergedAnd = Array.from(new Set([...filterTagIDs, ...parsed.andTagIDs]));
-    const fromISO = from ? new Date(from).toISOString() : undefined;
-    const toISO = to ? new Date(to).toISOString() : undefined;
-    await runDistributionAnalysis(mergedAnd, parsed, fromISO, toISO);
+    await runDistributionAnalysis(execution.mergedAnd, execution.parsed, execution.range.from, execution.range.to);
   };
 
   const runDistributionFromCurrentInputs = async (datasetOverride?: DistributionDataset, axisOverride?: string) => {
-    const parsed = parseDanbooruStyleQuery(danbooruQuery, tagNameToID);
-    if (parsed.unknownTokens.length > 0) {
-      setQueryError(`未知のタグがあります: ${parsed.unknownTokens.join(", ")}`);
+    const execution = buildDistributionExecutionState(
+      danbooruQuery,
+      tagNameToID,
+      filterTagIDs,
+      from,
+      to,
+      parseDanbooruStyleQuery
+    );
+    if (!execution.parsed) {
+      setQueryError(execution.error);
       return;
     }
     setQueryError(null);
-    const mergedAnd = Array.from(new Set([...filterTagIDs, ...parsed.andTagIDs]));
-    const fromISO = from ? new Date(from).toISOString() : undefined;
-    const toISO = to ? new Date(to).toISOString() : undefined;
-    await runDistributionAnalysis(mergedAnd, parsed, fromISO, toISO, datasetOverride, axisOverride);
+    await runDistributionAnalysis(
+      execution.mergedAnd,
+      execution.parsed,
+      execution.range.from,
+      execution.range.to,
+      datasetOverride,
+      axisOverride
+    );
   };
+
+  const resolveSearchRange = (queryText: string) =>
+    queryText.trim() || filterTagIDs.length > 0 ? buildSearchRange(from, to) : {};
 
   const handleSearch = async (queryOverride?: string) => {
     const activeQuery = queryOverride ?? danbooruQuery;
-    const parsed = parseDanbooruStyleQuery(activeQuery, tagNameToID);
-    if (parsed.unknownTokens.length > 0) {
-      setQueryError(`未知のタグがあります: ${parsed.unknownTokens.join(", ")}`);
+    const { parsed, error } = buildParsedSearchState(activeQuery, tagNameToID, parseDanbooruStyleQuery);
+    if (!parsed) {
+      setQueryError(error);
       return;
     }
 
@@ -313,26 +375,35 @@ const Actions = () => {
     setAnalysisMessage(null);
     setSelectedDistributionBin(null);
 
-    const mergedAnd = Array.from(new Set([...filterTagIDs, ...parsed.andTagIDs]));
-    const fromISO = from ? new Date(from).toISOString() : undefined;
-    const toISO = to ? new Date(to).toISOString() : undefined;
+    const mergedAnd = buildMergedAndTagIDs(filterTagIDs, parsed);
+    const range = resolveSearchRange(activeQuery);
 
-    await fetchActions(1, 20, mergedAnd, {
-      sort,
-      order,
-      from: fromISO,
-      to: toISO,
-      anyTagIDs: parsed.anyTagIDs,
-      anyTagGroups: parsed.anyTagGroups,
-      excludeTagIDs: parsed.excludeTagIDs,
-    });
-    await analyzeCurrentResult(mergedAnd, parsed, fromISO, toISO);
-    await runDistributionAnalysis(mergedAnd, parsed, fromISO, toISO);
+    await fetchActions(1, 10, mergedAnd, buildActionSearchOptions(sort, order, parsed, range));
+    const fullSnapshot = await fetchActionsSnapshot(1, 500, mergedAnd, buildActionSearchOptions(sort, order, parsed, range));
+    setSearchedActionLogs(fullSnapshot?.logs || []);
+    await analyzeCurrentResult(mergedAnd, parsed, range.from, range.to);
+    await runDistributionAnalysis(mergedAnd, parsed, range.from, range.to);
+  };
+
+  const handleChangeResultsPage = async (page: number) => {
+    if (page < 1 || page === pagination.page) return;
+    const { parsed, error } = buildParsedSearchState(danbooruQuery, tagNameToID, parseDanbooruStyleQuery);
+    if (!parsed) {
+      setQueryError(error);
+      return;
+    }
+    const mergedAnd = buildMergedAndTagIDs(filterTagIDs, parsed);
+    const range = resolveSearchRange(danbooruQuery);
+    const fullSnapshot = await fetchActionsSnapshot(1, 500, mergedAnd, buildActionSearchOptions(sort, order, parsed, range));
+    if (fullSnapshot) {
+      setSearchedActionLogs(fullSnapshot.logs);
+    }
+    await fetchActions(page, 10, mergedAnd, buildActionSearchOptions(sort, order, parsed, range));
   };
 
   const appendSuggestedTagToQuery = async (tag: string, mode: "append" | "search" = "append") => {
-    const tokens = danbooruQuery.trim() ? danbooruQuery.trim().split(/\s+/) : [];
-    if (tokens.includes(tag)) {
+    const appended = appendTagToQueryText(danbooruQuery, tag);
+    if (appended.alreadyIncluded) {
       setAnalysisMessage(`タグ ${tag} はすでにクエリへ含まれています。`);
       if (mode === "search") {
         await handleSearch();
@@ -340,7 +411,7 @@ const Actions = () => {
       return;
     }
 
-    const updated = [...tokens, tag].join(" ").trim();
+    const updated = appended.updatedQuery;
     setDanbooruQuery(updated);
 
     if (mode === "search") {
@@ -353,37 +424,39 @@ const Actions = () => {
   };
 
   const selectDistributionBin = (index: number) => {
-    if (!distributionResult?.residual_bins[index]) return;
-    setSelectedDistributionBin({ index, bin: distributionResult.residual_bins[index] });
+    const selected = selectDistributionBinEntry(distributionResult, index);
+    if (!selected) return;
+    setSelectedDistributionBin(selected);
     setAnalysisMessage("補完グラフの帯域を選択しました。候補タグや候補軸の試行に使えます。");
   };
 
   const handleClear = async () => {
-    setFilterTagIDs([]);
-    setDanbooruQuery("");
-    setQueryError(null);
-    setSaveMessage(null);
-    setAnalysisMessage(null);
-    setAnalysisState(null);
-    setDistributionResult(null);
-    setSelectedDistributionBin(null);
-    setSort("occurred_at");
-    setOrder("desc");
-    setIsDateRangeManual(false);
-    setFrom("");
-    setTo("");
-    await fetchActions(1, 20, [], { sort: "occurred_at", order: "desc" });
+    const cleared = buildClearedSearchState();
+    setFilterTagIDs(cleared.filterTagIDs);
+    setDanbooruQuery(cleared.danbooruQuery);
+    setQueryError(cleared.queryError);
+    setSaveMessage(cleared.saveMessage);
+    setAnalysisMessage(cleared.analysisMessage);
+    setAnalysisState(cleared.analysisState);
+    setDistributionResult(cleared.distributionResult);
+    setSelectedDistributionBin(cleared.selectedDistributionBin);
+    setSort(cleared.sort);
+    setOrder(cleared.order);
+    setIsDateRangeManual(cleared.isDateRangeManual);
+    setFrom(cleared.from);
+    setTo(cleared.to);
+    setSearchedActionLogs(null);
   };
 
   const handleSaveAsTarget = async () => {
-    const parsed = parseDanbooruStyleQuery(danbooruQuery, tagNameToID);
-    if (parsed.unknownTokens.length > 0) {
-      setQueryError(`未知のタグがあります: ${parsed.unknownTokens.join(", ")}`);
+    const { parsed, error } = buildParsedSearchState(danbooruQuery, tagNameToID, parseDanbooruStyleQuery);
+    if (!parsed) {
+      setQueryError(error);
       return;
     }
     setQueryError(null);
 
-    const mergedAnd = Array.from(new Set([...filterTagIDs, ...parsed.andTagIDs]));
+    const mergedAnd = buildMergedAndTagIDs(filterTagIDs, parsed);
     if (mergedAnd.length === 0 && parsed.anyTagIDs.length === 0 && parsed.anyTagGroups.length === 0) {
       setSaveMessage("保存するには、少なくとも1つ以上の条件が必要です。");
       return;
@@ -393,13 +466,9 @@ const Actions = () => {
     const name = window.prompt("保存名を入力してください", suggestedName)?.trim();
     if (!name) return;
 
-    const normalizedLocationKey = locationKey.trim();
-    const locationToken = normalizedLocationKey ? `location_key:${normalizedLocationKey}` : "";
-    const queryTextToSave = [danbooruQuery.trim(), locationToken].filter(Boolean).join(" ");
-    const descriptionToSave = queryTextToSave || "保存済み検索条件";
-
-    const created = await createTarget(name, descriptionToSave, mergedAnd, {
-      queryText: queryTextToSave,
+    const savedSearch = buildSavedSearchPayload(danbooruQuery, locationKey);
+    const created = await createTarget(name, savedSearch.description, mergedAnd, {
+      queryText: savedSearch.queryText,
       anyTagIDs: parsed.anyTagIDs,
       anyTagGroups: parsed.anyTagGroups,
       excludeTagIDs: parsed.excludeTagIDs,
@@ -414,82 +483,55 @@ const Actions = () => {
 
   const handleClearSnapshots = async () => {
     if (!window.confirm("分析履歴をすべて削除しますか。")) return;
-    const ok = await clearSnapshots();
+    const ok = await clearAnalysisHistory(clearSnapshots);
     if (ok) {
       setAnalysisHistory([]);
       setAnalysisMessage("分析履歴を削除しました。");
     }
   };
 
-  const validateWorldSignalInputs = (): { lat: number; lon: number; pDays: number; fDays: number } | null => {
-    if (externalDataSource === "e_stat_dashboard") {
-      if (!locationKey.trim()) {
-        setAnalysisMessage("e-Stat Dashboard では location_key に都道府県コードが必要です。例: 13000");
-        return null;
-      }
-      return {
-        lat: Number(latitude) || 0,
-        lon: Number(longitude) || 0,
-        pDays: Number(pastDays) || 0,
-        fDays: Number(forecastDays) || 0,
-      };
-    }
-
-    if (!locationKey.trim()) {
-      setAnalysisMessage("location_key を入力してください。");
-      return null;
-    }
-
-    const lat = Number(latitude);
-    const lon = Number(longitude);
-    const pDays = Number(pastDays);
-    const fDays = Number(forecastDays);
-
-    if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
-      setAnalysisMessage("latitude と longitude は数値で入力してください。");
-      return null;
-    }
-    if (!Number.isFinite(pDays) || !Number.isFinite(fDays)) {
-      setAnalysisMessage("past_days と forecast_days は数値で入力してください。");
-      return null;
-    }
-
-    return { lat, lon, pDays, fDays };
-  };
 
   const handleLoadAnalysisContext = async () => {
-    if (!from || !to) {
-      setAnalysisMessage("分析コンテキストを取得するには from / to が必要です。");
-      return;
-    }
-    const result = await fetchAnalysisContext(
+    const { result, message } = await loadAnalysisContext({
+      fetchAnalysisContext,
       externalDataSource,
-      locationKey.trim(),
+      locationKey,
       effectiveExternalSignalType,
-      new Date(from).toISOString(),
-      new Date(to).toISOString(),
-      200
-    );
+      from,
+      to,
+    });
     if (result) {
       setContextResult(result);
       if (result.summary.signal_count > 0 && result.summary.action_count === 0) {
         setDistributionDataset("world_signals");
       }
-      setAnalysisMessage("分析コンテキストを更新しました。");
     }
+    setAnalysisMessage(message);
   };
 
   const handleFetchWorldSignals = async () => {
-    const validated = validateWorldSignalInputs();
-    if (!validated) return;
+    const validated = validateWorldSignalInputs({
+      externalDataSource,
+      locationKey,
+      latitude,
+      longitude,
+      pastDays,
+      forecastDays,
+    });
+    if (!validated.values) {
+      if (validated.message) {
+        setAnalysisMessage(validated.message);
+      }
+      return;
+    }
 
     const ok = await fetchOpenMeteo({
       source: externalDataSource,
       locationKey: locationKey.trim(),
-      latitude: validated.lat,
-      longitude: validated.lon,
-      pastDays: validated.pDays,
-      forecastDays: validated.fDays,
+      latitude: validated.values.lat,
+      longitude: validated.values.lon,
+      pastDays: validated.values.pDays,
+      forecastDays: validated.values.fDays,
     });
     if (!ok) return;
 
@@ -513,7 +555,7 @@ const Actions = () => {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("この行動記録を削除しますか。")) return;
+    if (!confirmDeleteAction(window.confirm)) return;
     await deleteAction(id);
   };
 
@@ -523,73 +565,30 @@ const Actions = () => {
   );
 
   const filteredSortedHistory = useMemo(() => {
-    const filtered =
-      historySeverityFilter === "ALL"
-        ? analysisHistory
-        : analysisHistory.filter((item) => item.severity === historySeverityFilter);
-
-    const copied = [...filtered];
-    if (historySort === "created_desc") {
-      copied.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-    } else if (historySort === "created_asc") {
-      copied.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-    } else {
-      copied.sort((a, b) => b.score - a.score);
-    }
-    return copied;
+    return buildFilteredSortedHistory(analysisHistory, historySeverityFilter, historySort);
   }, [analysisHistory, historySeverityFilter, historySort]);
 
   const actionScatterPoints = useMemo(
-    () => buildActionScatterPoints(actions, actionScatterXAxis, actionScatterYAxis, actionAxisValue),
-    [actions, actionScatterXAxis, actionScatterYAxis]
+    () => buildActionScatterPoints(searchedActionLogs ?? [], actionScatterXAxis, actionScatterYAxis, actionAxisValue),
+    [searchedActionLogs, actionScatterXAxis, actionScatterYAxis]
   );
 
-  const distributionDatasetLabel = distributionDataset === "action_logs" ? "行動記録" : "外部ビッグデータ";
-  const selectedDatasetCount =
-    distributionDataset === "action_logs"
-      ? contextResult?.summary.action_count ?? actions.length
-      : contextResult?.summary.signal_count ?? 0;
-
-  const distributionEmptyHint =
-    distributionDataset === "action_logs" && selectedDatasetCount === 0
-      ? "行動記録が0件です。検索条件を見直すか、先にデータを追加してください。"
-      : distributionDataset === "world_signals" && selectedDatasetCount === 0
-        ? "外部ビッグデータが0件です。Open-Meteo取得か分析期間を見直してください。"
-        : null;
-
-  const selectedBinStatus = selectedDistributionBin
-    ? selectedDistributionBin.bin.gap_count > 0
-      ? {
-          kind: "shortage" as const,
-          label: "不足帯域",
-          message: "この帯域には、期待より少ない値しか入っていません。条件追加や群分割の候補を試してください。",
-        }
-      : selectedDistributionBin.bin.gap_count < 0
-        ? {
-            kind: "excess" as const,
-            label: "過剰帯域",
-            message: "この帯域には、期待より値が集まりすぎています。偏りを生む条件が残っている可能性があります。",
-          }
-        : {
-            kind: "balanced" as const,
-            label: "均衡帯域",
-            message: "この帯域は期待分布に近い状態です。ほかの帯域との差分確認に使ってください。",
-          }
-    : null;
+  const distributionDatasetLabel = getDistributionDatasetLabel(distributionDataset);
+  const selectedDatasetCount = getSelectedDatasetCount(distributionDataset, contextResult, actions.length);
+  const distributionEmptyHint = getDistributionEmptyHint(distributionDataset, selectedDatasetCount);
+  const selectedBinStatus = buildSelectedBinStatus(selectedDistributionBin);
 
   const switchDistributionDataset = (dataset: DistributionDataset) => {
     setDistributionDataset(dataset);
-    if (dataset === "world_signals") {
-      setDistributionAxis(externalDataSource === "e_stat_dashboard" ? "signal_value" : "temperature_c");
-    } else {
-      setDistributionAxis(defaultAxisByDataset(dataset, actionAxisCandidates));
-    }
+    setDistributionAxis(
+      resolveNextDistributionAxis(dataset, externalDataSource, actionAxisCandidates, defaultAxisByDataset)
+    );
     setDistributionResult(null);
     setSelectedDistributionBin(null);
   };
 
   const resetDateRangeSync = () => {
-    const synced = syncDateRangeWithOpenDataWindow(pastDays, forecastDays);
+    const synced = buildResetDateRangeState(syncDateRangeWithOpenDataWindow, pastDays, forecastDays);
     if (!synced) return;
     setIsDateRangeManual(false);
     setFrom(synced.from);
@@ -653,6 +652,7 @@ const Actions = () => {
         to={to}
         isDateRangeManual={isDateRangeManual}
         danbooruQuery={danbooruQuery}
+        searchSuggestions={searchSuggestions}
         groupedTags={groupedTags}
         filterTagIDs={filterTagIDs}
         loading={loading}
@@ -669,6 +669,7 @@ const Actions = () => {
           setTo(value);
         }}
         onDanbooruQueryChange={setDanbooruQuery}
+        onAppendSearchSuggestion={appendSearchSuggestion}
         onResetDateRangeSync={resetDateRangeSync}
         onToggleFilterTag={toggleFilterTag}
         onSearch={() => void handleSearch()}
@@ -706,6 +707,26 @@ const Actions = () => {
         signalOptions={eStatDashboardSignalOptions}
       />
 
+      {searchedActionLogs !== null && (
+        <ActionsResultsSection
+          currentPage={pagination.page}
+          pageSize={pagination.limit}
+          paginationTotal={pagination.total}
+          actions={actions}
+          actionAxisCandidates={actionAxisCandidates}
+          actionScatterXAxis={actionScatterXAxis}
+          actionScatterYAxis={actionScatterYAxis}
+          actionScatterPoints={actionScatterPoints}
+          prototypeNameMap={prototypeNameMap}
+          formatTagNames={(tagIDs) => formatTagNames(tagIDs, tagNameMap)}
+          loading={loading}
+          onActionScatterXAxisChange={setActionScatterXAxis}
+          onActionScatterYAxisChange={setActionScatterYAxis}
+          onPageChange={(page) => void handleChangeResultsPage(page)}
+          onDelete={(id) => void handleDelete(id)}
+        />
+      )}
+
       <ActionsDistributionSection
         distributionResult={distributionResult}
         distributionDataset={distributionDataset}
@@ -737,24 +758,14 @@ const Actions = () => {
         onHistorySortChange={setHistorySort}
         onClearSnapshots={() => void handleClearSnapshots()}
       />
-
-      <ActionsResultsSection
-        paginationTotal={pagination.total}
-        actions={actions}
-        actionAxisCandidates={actionAxisCandidates}
-        actionScatterXAxis={actionScatterXAxis}
-        actionScatterYAxis={actionScatterYAxis}
-        actionScatterPoints={actionScatterPoints}
-        prototypeNameMap={prototypeNameMap}
-        formatTagNames={(tagIDs) => formatTagNames(tagIDs, tagNameMap)}
-        loading={loading}
-        onActionScatterXAxisChange={setActionScatterXAxis}
-        onActionScatterYAxisChange={setActionScatterYAxis}
-        onDelete={(id) => void handleDelete(id)}
-      />
     </div>
   );
 };
 
 export default Actions;
+
+
+
+
+
 

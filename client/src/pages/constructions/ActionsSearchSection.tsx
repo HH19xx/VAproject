@@ -1,5 +1,6 @@
+import SearchSuggestionRail from "../../components/search/SearchSuggestionRail";
 import styles from "../../assets/styles/Actions.module.scss";
-import type { SortKey, SortOrder } from "./components/actionsSearchSectionHelpers";
+import type { SearchTagSuggestion, SortKey, SortOrder } from "./components/actionsSearchSectionHelpers";
 
 interface ActionsSearchSectionProps {
   sort: SortKey;
@@ -8,7 +9,8 @@ interface ActionsSearchSectionProps {
   to: string;
   isDateRangeManual: boolean;
   danbooruQuery: string;
-  groupedTags: Array<[string, Array<{ id: number; name: string }>]>;
+  searchSuggestions: SearchTagSuggestion[];
+  groupedTags: Array<[string, Array<{ id: number; name: string }>]>; 
   filterTagIDs: number[];
   loading: boolean;
   snapshotLoading: boolean;
@@ -18,6 +20,7 @@ interface ActionsSearchSectionProps {
   onFromChange: (value: string) => void;
   onToChange: (value: string) => void;
   onDanbooruQueryChange: (value: string) => void;
+  onAppendSearchSuggestion: (tagName: string) => void;
   onResetDateRangeSync: () => void;
   onToggleFilterTag: (tagID: number) => void;
   onSearch: () => void | Promise<void>;
@@ -32,6 +35,7 @@ const ActionsSearchSection = ({
   to,
   isDateRangeManual,
   danbooruQuery,
+  searchSuggestions,
   groupedTags,
   filterTagIDs,
   loading,
@@ -42,15 +46,21 @@ const ActionsSearchSection = ({
   onFromChange,
   onToChange,
   onDanbooruQueryChange,
+  onAppendSearchSuggestion,
   onResetDateRangeSync,
   onToggleFilterTag,
   onSearch,
   onSaveAsTarget,
   onClear,
 }: ActionsSearchSectionProps) => {
+  const hasQuery = danbooruQuery.trim().length > 0;
+
   return (
     <div className={styles.filterPanel}>
-      <div className={styles.filterTitle}>検索条件</div>
+      <div className={styles.searchHero}>
+        <div className={styles.filterTitle}>検索条件</div>
+      </div>
+
       <div className={styles.controlGrid}>
         <label>
           並び順
@@ -85,48 +95,58 @@ const ActionsSearchSection = ({
           <>
             {" "}
             <button type="button" className={styles.suggestionChip} onClick={onResetDateRangeSync}>
-              自動同期に戻す
+              自動同期へ戻す
             </button>
           </>
         )}
       </div>
 
-      <div className={styles.controlGrid}>
-        <label>
+      <div className={styles.searchBarRow}>
+        <label className={styles.searchBarField}>
           Danbooru 形式検索クエリ
           <input
-            className={styles.input}
+            className={`${styles.input} ${styles.searchBarInput}`}
             type="text"
             value={danbooruQuery}
             onChange={(event) => onDanbooruQueryChange(event.target.value)}
-            placeholder="例: 物価 ~弁当 -高い / 朝 山手線 | 昼 中央線"
+            placeholder="例: 交通 山手線 -混雑 / 昼_弁当 / 価格=680 / 交通 山手線 | 物価 昼_弁当"
           />
         </label>
       </div>
 
+      <SearchSuggestionRail
+        title={hasQuery ? "入力候補" : "候補タグ"}
+        suggestions={searchSuggestions}
+        emptyMessage={hasQuery ? "一致するタグはありません。" : "候補に出せるタグがまだありません。"}
+        onSelectSuggestion={onAppendSearchSuggestion}
+      />
+
       <div className={styles.info}>
-        `tag` は AND、`~tag` は OR、`-tag` は除外、`A B | C D` は `(A AND B) OR (C AND D)` です。
+        半角空白区切りです。`tag` は AND、`~tag` は OR、`-tag` は除外です。`A B | C D` は `(A B)~(C D)`、つまり `(A AND B) OR (C AND D)` を意味します。タグ名に半角スペースを入れたい場合は `_` を使ってください。
       </div>
 
-      <div className={styles.filterTagList}>
-        {groupedTags.map(([groupName, groupTags]) => (
-          <div key={groupName} className={styles.filterTagGroup}>
-            <div className={styles.filterTagGroupTitle}>{groupName}</div>
-            <div className={styles.filterTagItems}>
-              {groupTags.map((tag) => (
-                <label key={tag.id} className={styles.filterTagItem}>
-                  <input
-                    type="checkbox"
-                    checked={filterTagIDs.includes(tag.id)}
-                    onChange={() => onToggleFilterTag(tag.id)}
-                  />
-                  <span>{tag.name}</span>
-                </label>
-              ))}
+      <details className={styles.collapsiblePanel}>
+        <summary className={styles.collapsibleSummary}>タグ一覧から直接選ぶ</summary>
+        <div className={styles.filterTagList}>
+          {groupedTags.map(([groupName, groupTags]) => (
+            <div key={groupName} className={styles.filterTagGroup}>
+              <div className={styles.filterTagGroupTitle}>{groupName}</div>
+              <div className={styles.filterTagItems}>
+                {groupTags.map((tag) => (
+                  <label key={tag.id} className={styles.filterTagItem}>
+                    <input
+                      type="checkbox"
+                      checked={filterTagIDs.includes(tag.id)}
+                      onChange={() => onToggleFilterTag(tag.id)}
+                    />
+                    <span>{tag.name}</span>
+                  </label>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      </details>
 
       <div className={styles.filterActions}>
         <button className={styles.secondaryButton} onClick={() => void onSearch()} disabled={loading || snapshotLoading}>

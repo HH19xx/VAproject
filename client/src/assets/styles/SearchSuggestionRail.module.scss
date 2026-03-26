@@ -1,0 +1,34 @@
+@use "./_common" as *;
+
+.suggestionBox {
+  margin-top: -2px;
+  margin-bottom: 12px;
+  padding: 0.9rem 1rem;
+  border: 1px solid rgba(33, 48, 65, 0.14);
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.suggestionTitle {
+  font-size: var(--font-size-label);
+  color: rgba(35, 48, 65, 0.72);
+  margin-bottom: 0.65rem;
+  font-weight: 700;
+}
+
+.suggestionList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.suggestionChip {
+  @include button-card();
+  padding: 0.42rem 0.8rem;
+  font-size: var(--font-size-caption);
+}
+
+.suggestionEmpty {
+  font-size: var(--font-size-caption);
+  color: rgba(35, 48, 65, 0.6);
+}

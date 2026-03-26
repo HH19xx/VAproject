@@ -60,7 +60,7 @@ const ActionsHistorySection = ({
             const x2 = ((list.length - (index - 1)) / (list.length - 1)) * 590 + 5;
             const y1 = 110 - (entry.score / maxScore) * 100;
             const y2 = 110 - (list[index - 1].score / maxScore) * 100;
-            return <line key={entry.id} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#007bff" strokeWidth="2" />;
+            return <line key={entry.id} x1={x1} y1={y1} x2={x2} y2={y2} stroke="#a93a53" strokeWidth="2" />;
           })}
       </svg>
 
