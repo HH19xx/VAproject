@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { buildSearchTagSuggestions, type SearchTagSuggestion } from "../pages/constructions/components/actionsSearchSectionHelpers";
+import { buildSearchTagSuggestions, type SearchTagSuggestion } from "../pages/constructions/actionsSearch/actionsSearchSectionHelpers";
 
 const DEFAULT_SEARCH_SUGGESTION_LIMIT = 12;
 

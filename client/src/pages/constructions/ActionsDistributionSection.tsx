@@ -1,8 +1,8 @@
-﻿import styles from "../../assets/styles/Actions.module.scss";
+import styles from "../../assets/styles/Actions.module.scss";
 import type { DistributionAnalysisResult, DistributionDataset } from "../../hooks/useDistributionAnalysis";
-import type { ScatterAxisKey } from "./components/actionsDistribution/externalAxisLabels";
-import { externalAxisLabelMap } from "./components/actionsDistribution/externalAxisLabels";
-import { renderDistributionOverviewSvg, renderGapSvg } from "./components/actionsDistribution/actionsDistributionChart";
+import type { ScatterAxisKey } from "./actionsDistribution/externalAxisLabels";
+import { externalAxisLabelMap } from "./actionsDistribution/externalAxisLabels";
+import { renderDistributionOverviewSvg, renderGapSvg } from "./actionsDistribution/actionsDistributionChart";
 import {
   formatNum,
   toActionAxisLabel,
@@ -11,9 +11,9 @@ import {
   toResidualAxisReasonLabel,
   toResidualAxisTypeLabel,
   toResidualStrategyLabel,
-} from "./components/actionsDistribution/actionsDistributionLabels";
-import { toDistributionSeverity, type AnalysisViewState } from "./components/actionsDistribution/actionsDistributionScore";
-import type { SelectedDistributionBin } from "./components/actionsDistribution/actionsDistributionTypes";
+} from "./actionsDistribution/actionsDistributionLabels";
+import { toDistributionSeverity, type AnalysisViewState } from "./actionsDistribution/actionsDistributionScore";
+import type { SelectedDistributionBin } from "./actionsDistribution/actionsDistributionTypes";
 
 interface ActionsDistributionSectionProps {
   distributionResult: DistributionAnalysisResult | null;
@@ -348,4 +348,3 @@ const ActionsDistributionSection = ({
 };
 
 export default ActionsDistributionSection;
-

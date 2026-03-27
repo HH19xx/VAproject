@@ -1,9 +1,9 @@
-﻿import type { ActionLog } from "../../../../hooks/useActions";
-import type { AnalysisSeverity, DistributionStats } from "../../../../hooks/useAnalysisSnapshots";
+import type { ActionLog } from "../../../hooks/useActions";
+import type { AnalysisSeverity, DistributionStats } from "../../../hooks/useAnalysisSnapshots";
 import type {
   DistributionAnalysisResult,
   NumericDistributionStats,
-} from "../../../../hooks/useDistributionAnalysis";
+} from "../../../hooks/useDistributionAnalysis";
 
 export interface AnalysisViewState {
   severity: AnalysisSeverity;

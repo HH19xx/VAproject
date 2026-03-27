@@ -1,5 +1,5 @@
-﻿import type { ActionLog } from "../../../../hooks/useActions";
-import type { DistributionDataset } from "../../../../hooks/useDistributionAnalysis";
+import type { ActionLog } from "../../../hooks/useActions";
+import type { DistributionDataset } from "../../../hooks/useDistributionAnalysis";
 
 export const ACTION_AXIS_DEFAULTS = [
   "occurred_at",

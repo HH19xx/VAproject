@@ -1,4 +1,4 @@
-﻿import type { DistributionBin } from "../../../../hooks/useDistributionAnalysis";
+import type { DistributionBin } from "../../../hooks/useDistributionAnalysis";
 
 export interface SelectedDistributionBin {
   index: number;

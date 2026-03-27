@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { DistributionAnalysisResult, DistributionDataset } from "../../../hooks/useDistributionAnalysis";
-import type { AnalysisViewState } from "./actionsDistribution/actionsDistributionScore";
-import type { SelectedDistributionBin } from "./actionsDistribution/actionsDistributionTypes";
+import type { AnalysisViewState } from "../actionsDistribution/actionsDistributionScore";
+import type { SelectedDistributionBin } from "../actionsDistribution/actionsDistributionTypes";
 
 const useActionsDistributionState = () => {
   const [analysisState, setAnalysisState] = useState<AnalysisViewState | null>(null);

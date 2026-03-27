@@ -1,5 +1,5 @@
-import type { SortKey, SortOrder } from "./actionsSearch/actionsSearchTypes";
-import type { ParsedQuery } from "./actionsSearch/actionsSearchQuery";
+import type { SortKey, SortOrder } from "./actionsSearchTypes";
+import type { ParsedQuery } from "./actionsSearchQuery";
 
 export interface ActionSearchOptions {
   sort?: "occurred_at" | "created_at" | "updated_at" | "title" | "tag_count";

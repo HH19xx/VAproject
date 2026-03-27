@@ -1,5 +1,5 @@
 import styles from "../../assets/styles/SearchSuggestionRail.module.scss";
-import type { SearchTagSuggestion } from "../../pages/constructions/components/actionsSearchSectionHelpers";
+import type { SearchTagSuggestion } from "../../pages/constructions/actionsSearch/actionsSearchSectionHelpers";
 
 type SearchSuggestionRailProps = {
   title: string;

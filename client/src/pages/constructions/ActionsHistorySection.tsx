@@ -1,7 +1,7 @@
 import styles from "../../assets/styles/Actions.module.scss";
 import type { AnalysisSeverity, AnalysisSnapshot } from "../../hooks/useAnalysisSnapshots";
-import type { HistorySortKey } from "./components/actionsHistorySectionHelpers";
-import { extractSnapshotMeta, formatNum, toDatasetLabel } from "./components/actionsHistorySectionHelpers";
+import type { HistorySortKey } from "./actionsHistory/actionsHistorySectionHelpers";
+import { extractSnapshotMeta, formatNum, toDatasetLabel } from "./actionsHistory/actionsHistorySectionHelpers";
 
 interface ActionsHistorySectionProps {
   analysisHistory: AnalysisSnapshot[];

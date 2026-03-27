@@ -1,5 +1,5 @@
 import type { AnalysisSeverity, AnalysisSnapshot } from "../../../hooks/useAnalysisSnapshots";
-import type { HistorySortKey } from "./actionsHistorySectionHelpers";
+import type { HistorySortKey } from "../actionsHistory/actionsHistorySectionHelpers";
 
 export const loadAnalysisHistory = async (
   listSnapshots: (limit?: number) => Promise<AnalysisSnapshot[]>,

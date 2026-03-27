@@ -1,4 +1,4 @@
-﻿import type { AnalysisSeverity } from "../../../../hooks/useAnalysisSnapshots";
+import type { AnalysisSeverity } from "../../../hooks/useAnalysisSnapshots";
 
 export const formatNum = (value: number, digits = 3) => value.toFixed(digits);
 

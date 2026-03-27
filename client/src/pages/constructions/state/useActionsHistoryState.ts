@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { AnalysisSeverity, AnalysisSnapshot } from "../../../hooks/useAnalysisSnapshots";
-import type { HistorySortKey } from "./actionsHistorySectionHelpers";
+import type { HistorySortKey } from "../actionsHistory/actionsHistorySectionHelpers";
 
 const useActionsHistoryState = () => {
   const [analysisHistory, setAnalysisHistory] = useState<AnalysisSnapshot[]>([]);

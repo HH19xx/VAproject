@@ -1,5 +1,5 @@
-﻿import type { ReactElement } from "react";
-import type { DistributionBin } from "../../../../hooks/useDistributionAnalysis";
+import type { ReactElement } from "react";
+import type { DistributionBin } from "../../../hooks/useDistributionAnalysis";
 
 const SVG_VIEWBOX_WIDTH = 900;
 const SVG_VIEWBOX_HEIGHT = 260;

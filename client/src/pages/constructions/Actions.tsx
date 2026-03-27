@@ -1,4 +1,4 @@
-﻿import { useMemo } from "react";
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useActions } from "../../hooks/useActions";
 import { usePrototypes } from "../../hooks/usePrototypes";
@@ -37,7 +37,7 @@ import {
   parseDanbooruStyleQuery,
   syncDateRangeWithOpenDataWindow,
   toLocalDateTimeValue,
-} from "./components/actionsSearchSectionHelpers";
+} from "./actionsSearch/actionsSearchSectionHelpers";
 import {
   appendTagToQueryText,
   buildActionSearchOptions,
@@ -47,19 +47,19 @@ import {
   buildSavedSearchPayload,
   buildSearchRange,
   confirmDeleteAction,
-} from "./components/actionsSearchController";
+} from "./actionsSearch/actionsSearchController";
 import {
   buildContextStaleState,
-} from "./components/actionsOpenDataSectionHelpers";
-import { buildAvailableWorldAxisEntries } from "./components/actionsDistribution/externalAxisLabels";
-import { ACTION_AXIS_DEFAULTS, actionAxisValue, defaultAxisByDataset } from "./components/actionsDistribution/actionsDistributionAxes";
-import { calculateDistributionStats, deriveSeverity } from "./components/actionsDistribution/actionsDistributionScore";
+} from "./actionsOpenData/actionsOpenDataSectionHelpers";
+import { buildAvailableWorldAxisEntries } from "./actionsDistribution/externalAxisLabels";
+import { ACTION_AXIS_DEFAULTS, actionAxisValue, defaultAxisByDataset } from "./actionsDistribution/actionsDistributionAxes";
+import { calculateDistributionStats, deriveSeverity } from "./actionsDistribution/actionsDistributionScore";
 import {
   buildFilteredSortedHistory,
   clearAnalysisHistory,
   loadAnalysisHistory as loadAnalysisHistoryEntries,
-} from "./components/actionsHistoryController";
-import { loadAnalysisContext, validateWorldSignalInputs } from "./components/actionsOpenDataController";
+} from "./actionsHistory/actionsHistoryController";
+import { loadAnalysisContext, validateWorldSignalInputs } from "./actionsOpenData/actionsOpenDataController";
 import {
   buildDistributionExecutionState,
   buildResetDateRangeState,
@@ -72,17 +72,17 @@ import {
   resolveNextDistributionAxis,
   saveDistributionSnapshot,
   selectDistributionBin as selectDistributionBinEntry,
-} from "./components/actionsDistributionController";
-import useActionsSearchState from "./components/useActionsSearchState";
-import useActionsDistributionState from "./components/useActionsDistributionState";
-import useActionsOpenDataState from "./components/useActionsOpenDataState";
-import useActionsHistoryState from "./components/useActionsHistoryState";
+} from "./actionsDistribution/actionsDistributionController";
+import useActionsSearchState from "./state/useActionsSearchState";
+import useActionsDistributionState from "./state/useActionsDistributionState";
+import useActionsOpenDataState from "./state/useActionsOpenDataState";
+import useActionsHistoryState from "./state/useActionsHistoryState";
 import {
   useActionsAxisSync,
   useActionsDateRangeSync,
   useActionsExternalSourceSync,
   useActionsInitialLoad,
-} from "./components/useActionsEffects";
+} from "./effects/useActionsEffects";
 
 const Actions = () => {
   const navigate = useNavigate();
@@ -615,7 +615,7 @@ const Actions = () => {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Déconstruction d'Objet機能</h1>
+        <h1 className={styles.title}>Déconstruction機能</h1>
         <div className={styles.actionsRow}>
           <button
             className={styles.secondaryButton}
@@ -758,6 +758,11 @@ const Actions = () => {
         onHistorySortChange={setHistorySort}
         onClearSnapshots={() => void handleClearSnapshots()}
       />
+      <div className={styles.footer}>
+        <button className={styles.backButton} onClick={() => navigate("/dashboard")}>
+          ダッシュボードへ戻る
+        </button>
+      </div>
     </div>
   );
 };

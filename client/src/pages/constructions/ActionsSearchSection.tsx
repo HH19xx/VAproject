@@ -1,6 +1,6 @@
 import SearchSuggestionRail from "../../components/search/SearchSuggestionRail";
 import styles from "../../assets/styles/Actions.module.scss";
-import type { SearchTagSuggestion, SortKey, SortOrder } from "./components/actionsSearchSectionHelpers";
+import type { SearchTagSuggestion, SortKey, SortOrder } from "./actionsSearch/actionsSearchSectionHelpers";
 
 interface ActionsSearchSectionProps {
   sort: SortKey;

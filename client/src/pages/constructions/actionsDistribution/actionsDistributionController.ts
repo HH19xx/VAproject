@@ -8,9 +8,9 @@ import type {
   DistributionDataset,
 } from "../../../hooks/useDistributionAnalysis";
 import type { ExternalDataSource } from "../../../hooks/useWorldSignals";
-import { toLegacyDistributionStats, toSnapshotScore, toSnapshotSeverity } from "./actionsDistribution/actionsDistributionScore";
-import type { SelectedDistributionBin } from "./actionsDistribution/actionsDistributionTypes";
-import type { ParsedQuery } from "./actionsSearch/actionsSearchQuery";
+import { toLegacyDistributionStats, toSnapshotScore, toSnapshotSeverity } from "./actionsDistributionScore";
+import type { SelectedDistributionBin } from "./actionsDistributionTypes";
+import type { ParsedQuery } from "../actionsSearch/actionsSearchQuery";
 
 export const resolveBaselineWindow = (from: string, to: string): { from?: string; to?: string } => {
   if (!from || !to) return {};

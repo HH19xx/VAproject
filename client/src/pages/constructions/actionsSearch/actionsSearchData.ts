@@ -1,4 +1,4 @@
-import type { ActionLog, ActionLogListMeta } from "../../../../hooks/useActions";
+import type { ActionLog, ActionLogListMeta } from "../../../hooks/useActions";
 
 export type SearchTagSuggestion = {
   id: number;

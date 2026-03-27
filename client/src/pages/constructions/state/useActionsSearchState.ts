@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { ActionLog } from "../../../hooks/useActions";
-import type { SortKey, SortOrder } from "./actionsSearch/actionsSearchTypes";
+import type { SortKey, SortOrder } from "../actionsSearch/actionsSearchTypes";
 
 const useActionsSearchState = () => {
   const [sort, setSort] = useState<SortKey>("occurred_at");
