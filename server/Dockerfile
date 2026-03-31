@@ -12,7 +12,7 @@ RUN go mod download
 COPY . .
 
 # main.go をビルドしてバイナリを作成
-RUN CGO_ENABLED=0 GOOS=linux go build -o server ./main/cmd/main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o server ./cmd/monolith-api
 
 #  実行ステージ
 FROM alpine:latest

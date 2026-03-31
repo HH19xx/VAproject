@@ -18,52 +18,51 @@ import {
 import { eStatDashboardSignalOptions } from "../../constants/externalDataCatalog";
 import styles from "../../assets/styles/Actions.module.scss";
 import useSearchTagSuggestions from "../../hooks/useSearchTagSuggestions";
-import ActionsSearchSection from "./ActionsSearchSection";
-import ActionsOpenDataSection from "./ActionsOpenDataSection";
-import ActionsDistributionSection from "./ActionsDistributionSection";
-import ActionsHistorySection from "./ActionsHistorySection";
-import ActionsResultsSection from "./ActionsResultsSection";
+import {
+  ActionsDistributionSection,
+  ActionsHistorySection,
+  ActionsOpenDataSection,
+  ActionsResultsSection,
+  ActionsSearchSection,
+} from "./sections";
 import {
   type ParsedQuery,
+  appendTagToQueryText,
   buildActionAxisCandidates,
+  buildActionSearchOptions,
   buildActionScatterPoints,
+  buildClearedSearchState,
   buildGroupedTags,
+  buildMergedAndTagIDs,
+  buildParsedSearchState,
   buildPrototypeNameMap,
+  buildSavedSearchPayload,
+  buildSearchRange,
   buildTagNameMap,
   buildTagNameToID,
+  confirmDeleteAction,
   formatTagNames,
   isSameDateTimeByMinute,
   isValidDateRange,
   parseDanbooruStyleQuery,
   syncDateRangeWithOpenDataWindow,
   toLocalDateTimeValue,
-} from "./actionsSearch/actionsSearchSectionHelpers";
-import {
-  appendTagToQueryText,
-  buildActionSearchOptions,
-  buildClearedSearchState,
-  buildMergedAndTagIDs,
-  buildParsedSearchState,
-  buildSavedSearchPayload,
-  buildSearchRange,
-  confirmDeleteAction,
-} from "./actionsSearch/actionsSearchController";
+} from "./actionsSearch";
 import {
   buildContextStaleState,
-} from "./actionsOpenData/actionsOpenDataSectionHelpers";
-import { buildAvailableWorldAxisEntries } from "./actionsDistribution/externalAxisLabels";
-import { ACTION_AXIS_DEFAULTS, actionAxisValue, defaultAxisByDataset } from "./actionsDistribution/actionsDistributionAxes";
-import { calculateDistributionStats, deriveSeverity } from "./actionsDistribution/actionsDistributionScore";
+  loadAnalysisContext,
+  validateWorldSignalInputs,
+} from "./actionsOpenData";
 import {
-  buildFilteredSortedHistory,
-  clearAnalysisHistory,
-  loadAnalysisHistory as loadAnalysisHistoryEntries,
-} from "./actionsHistory/actionsHistoryController";
-import { loadAnalysisContext, validateWorldSignalInputs } from "./actionsOpenData/actionsOpenDataController";
-import {
+  ACTION_AXIS_DEFAULTS,
+  actionAxisValue,
+  buildAvailableWorldAxisEntries,
   buildDistributionExecutionState,
   buildResetDateRangeState,
   buildSelectedBinStatus,
+  calculateDistributionStats,
+  defaultAxisByDataset,
+  deriveSeverity,
   executeDistributionAnalysis,
   getDistributionDatasetLabel,
   getDistributionEmptyHint,
@@ -72,17 +71,24 @@ import {
   resolveNextDistributionAxis,
   saveDistributionSnapshot,
   selectDistributionBin as selectDistributionBinEntry,
-} from "./actionsDistribution/actionsDistributionController";
-import useActionsSearchState from "./state/useActionsSearchState";
-import useActionsDistributionState from "./state/useActionsDistributionState";
-import useActionsOpenDataState from "./state/useActionsOpenDataState";
-import useActionsHistoryState from "./state/useActionsHistoryState";
+} from "./actionsDistribution";
+import {
+  buildFilteredSortedHistory,
+  clearAnalysisHistory,
+  loadAnalysisHistory as loadAnalysisHistoryEntries,
+} from "./actionsHistory";
+import {
+  useActionsDistributionState,
+  useActionsHistoryState,
+  useActionsOpenDataState,
+  useActionsSearchState,
+} from "./state";
 import {
   useActionsAxisSync,
   useActionsDateRangeSync,
   useActionsExternalSourceSync,
   useActionsInitialLoad,
-} from "./effects/useActionsEffects";
+} from "./effects";
 
 const Actions = () => {
   const navigate = useNavigate();
